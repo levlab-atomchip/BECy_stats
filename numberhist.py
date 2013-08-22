@@ -2,7 +2,7 @@ import CloudImage
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
-dir = 'C:\\ImagingSave\\statistics\\loadmot_many\\2013-08-21\\'
+dir = 'Z:\\Users\\rwturner\\BECy Characterization\\statistics\\loadmot_poor\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -33,4 +33,7 @@ print(np.mean(numbers))
 print(np.std(numbers))
 print(2*np.std(numbers)/np.mean(numbers))
 plt.hist(numbers,20)
+plt.show()
+
+plt.plot(numbers)
 plt.show()

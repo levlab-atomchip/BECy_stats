@@ -1,7 +1,7 @@
 import CloudImage
 import glob
 import matplotlib.pyplot as plt
-dir = 'C:\\ImagingSave\\statistics\\loadmot_many\\2013-08-21\\'
+dir = 'Z:\\Users\\rwturner\\BECy Characterization\\statistics\\loadmot_varyYLoad\\2013-08-21\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -23,4 +23,7 @@ for img in imagelist:
 plt.plot(param_vals,numbers,'.')
 plt.xlabel(thisimg.ContParName)
 plt.ylabel('Atom Number') 
+plt.show()
+
+plt.plot(numbers)
 plt.show()
