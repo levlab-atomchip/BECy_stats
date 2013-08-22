@@ -1,7 +1,7 @@
 import CloudImage
 import glob
 import matplotlib.pyplot as plt
-dir = 'Z:\\Users\\rwturner\\BECy Characterization\\statistics\\loadmot_varyYLoad\\2013-08-21\\'
+dir = 'C:\\ImagingSave\\statistics\\loadmot_many\\2013-08-21\\'
 
 imagelist = glob.glob(dir + '*.mat')
 

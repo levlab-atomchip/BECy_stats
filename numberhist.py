@@ -2,7 +2,7 @@ import CloudImage
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
-dir = 'Z:\\Users\\rwturner\\BECy Characterization\\statistics\\loadmot_poor\\'
+dir = 'C:\\ImagingSave\\statistics\\loadmot_many\\2013-08-21\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -16,9 +16,21 @@ for img in imagelist:
     print('Processed %d out of %d images'%(imgind, numimgs))
     imgind += 1
 
+from scipy.stats import gaussian_kde
+# data = [1.5]*7 + [2.5]*2 + [3.5]*8 + [4.5]*3 + [5.5]*1 + [6.5]*8
+density = gaussian_kde(numbers)
+xs = np.linspace(.75*np.min(numbers),1.25*np.max(numbers),200)
+density.covariance_factor = lambda : .25
+density._compute_covariance()
+plt.plot(xs,density(xs))
+plt.xlabel('Atom Number')
+plt.ylabel('Probability Density')
+plt.title('Number Probability Density, 100 Runs')
+plt.show()
+    
 print(numbers)
 print(np.mean(numbers))
 print(np.std(numbers))
 print(2*np.std(numbers)/np.mean(numbers))
-plt.hist(numbers, 5)
+plt.hist(numbers,20)
 plt.show()
