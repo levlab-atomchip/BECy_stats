@@ -2,7 +2,8 @@ import CloudImage
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
-dir = 'Z:\\Users\\rwturner\\BECy Characterization\\statistics\\loadmot_poor\\'
+import hempel
+dir = 'C:\\ImagingSave\\statistics\\loadmot_many\\2340\\2013-08-21\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -12,10 +13,16 @@ imgind = 1
 
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
-    numbers.append(thisimg.getAtomNumber())
+    thisnumber = thisimg.getAtomNumber()
+    # if thisnumber > 1e6: #cheap bad img check
+    numbers.append(thisnumber)
     print('Processed %d out of %d images'%(imgind, numimgs))
     imgind += 1
 
+#outlier removal
+numbers = hempel.hempel_filter(numbers)
+    
+    
 from scipy.stats import gaussian_kde
 # data = [1.5]*7 + [2.5]*2 + [3.5]*8 + [4.5]*3 + [5.5]*1 + [6.5]*8
 density = gaussian_kde(numbers)
@@ -35,5 +42,5 @@ print(2*np.std(numbers)/np.mean(numbers))
 plt.hist(numbers,20)
 plt.show()
 
-plt.plot(numbers)
+plt.plot(numbers, marker='o', linestyle = '--')
 plt.show()
