@@ -31,9 +31,9 @@ class CloudImage():
         # self.magnification
         # self.pixel_size
         # self.imageRotation
-        # self.c1
+        # self.c1 (pixel size times magnification?)
         # self.s_lambda
-        # self.A
+        # self.A (area of pixel)
 
     def loadMatFile(self):
         scipy.io.loadmat(self.fileName,mdict = self.matFile)
@@ -54,7 +54,7 @@ class CloudImage():
         self.darkImage = scipy.array(self.imageArray[:,:,2])
 
         self.magnification = self.hfig_main[0][0][85][0][0][2]
-        self.pixel_size = self.hfig_main[0][0][85][0][0][1]
+        self.pixel_size = self.hfig_main[0][0][85][0][0][1][0][0]
         self.imageRotation = self.hfig_main[0][0][86][0][0][0][0]
         self.c1 = self.hfig_main[0][0][85][0][0][9]
         self.s_lambda = self.hfig_main[0][0][85][0][0][11]
@@ -170,5 +170,11 @@ class CloudImage():
             return Cont_Param[self.CurrContPar]
     def getParamVal(self, param_name):
         return self.getVariableValues('Variables.m')[param_name]
+    def getPos(self, axis = 0):
+        image = self.getODImage()
+        imgcut = np.sum(image,axis)
+        coefs = self.fitGaussian1D(imgcut)
+        return coefs[2]*self.pixel_size
+    
         
         

@@ -3,8 +3,10 @@ import glob
 import matplotlib.pyplot as plt
 from scipy import stats
 import csv
-dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\loadmot_varyLoadTime\\2013-08-22\\'
+import numpy as np
+dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\loadmot_varyZLoad\\2013-08-22\\'
 ContParName = None
+unit = None
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -21,14 +23,24 @@ for img in imagelist:
     param_vals.append(thisimg.CurrContPar[0])
     # print(param_vals)
     # numbers.append(thisimg.getAtomNumber())
-    posx.append(thisimg.getpos(1))
-    posy.append(thisimg.getpos(2))
+    posx.append(thisimg.getPos(0))
+    posy.append(thisimg.getPos(1))
     print('Processed %d out of %d images'%(imgind, numimgs))
     imgind += 1
     
 ContParName = thisimg.ContParName
+# print thisimg.pixel_size
 
-    
+if ContParName == "XLoad":
+    param_vals = np.array(param_vals) / -0.479 #convert volts to amps
+    unit = ' / A'
+elif ContParName == "YLoad":
+    param_vals = np.array(param_vals) / -0.479
+    unit = ' / A'
+elif ContParName == "ZLoad":
+    param_vals = -6.0 * np.array(param_vals)
+    unit = ' / A'
+
 outputfile = dir + ContParName + 'vsPos.csv'
 with open(outputfile, 'w') as f:
     writer = csv.writer(f)
@@ -42,14 +54,14 @@ with open(outputfile, 'w') as f:
 # print("Intercept: %f"%intercept)
 # print("Standard Error: %f"%std_err)
     
-plt.plot(param_vals,posy,'.')
-plt.xlabel(ContParName)
-plt.ylabel('Y Position')
-plt.title('Y Position Vs.' + ContParName 
+plt.plot(param_vals,1e6*np.array(posy),'.')
+plt.xlabel(ContParName + unit)
+plt.ylabel('Y Position / um')
+plt.title('Y Position Vs. ' + ContParName )
 plt.show()
 
-plt.plot(param_vals,posx,'.')
-plt.xlabel(ContParName)
-plt.ylabel('X Position')
-plt.title('X Position Vs.' + ContParName 
+plt.plot(param_vals,1e6*np.array(posx),'.')
+plt.xlabel(ContParName + unit)
+plt.ylabel('X Position / um')
+plt.title('X Position Vs. ' + ContParName) 
 plt.show()
