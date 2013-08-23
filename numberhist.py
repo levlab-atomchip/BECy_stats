@@ -3,7 +3,8 @@ import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import hempel
-dir = 'C:\\ImagingSave\\statistics\\loadmot_many\\2340\\2013-08-21\\'
+import csv
+dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\loadmot_many\\first\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -21,6 +22,15 @@ for img in imagelist:
 
 #outlier removal
 numbers = hempel.hempel_filter(numbers)
+print numbers
+    
+outputfile = dir + 'numbers' + '.csv'
+with open(outputfile, 'w') as f:
+    writer = csv.writer(f)
+    # writer.writerow((ContParName, 'Number'))
+    # rows = zip(param_vals, numbers)
+    for num in numbers:
+        writer.writerow([num])
     
     
 from scipy.stats import gaussian_kde
