@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 import csv
 import numpy as np
-dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\loadmot_varyZLoad\\2013-08-22\\'
+dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\loadmot_varyYLoad\\2013-08-21\\'
 ContParName = None
 unit = None
 

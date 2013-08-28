@@ -46,7 +46,7 @@ class CloudImage():
         self.ContParName = self.runDataFiles[0][0][13][0]
         # print(self.ContParName)
         self.CurrContPar = self.runDataFiles[0][0][14][0]
-        self.CurrTOF = self.runDataFiles[0][0][15][0]
+        self.CurrTOF = self.runDataFiles[0][0][15][0][0]*1e-3
         
         self.atomImage = scipy.array(self.imageArray[:,:,0]) 
         #scipy.array is called to make a copy, not a reference
