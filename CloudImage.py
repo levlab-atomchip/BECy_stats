@@ -36,41 +36,41 @@ class CloudImage():
         # self.A (area of pixel)
 
     def loadMatFile(self):
-        scipy.io.loadmat(self.fileName,mdict = self.matFile)
+        scipy.io.loadmat(self.fileName,mdict = self.matFile, squeeze_me = True, struct_as_record = False)
         self.imageArray = self.matFile['rawImage']
         self.runDataFiles = self.matFile['runData']
         self.hfig_main = self.matFile['hfig_main']
 
         # print self.runDataFiles[0][0][13]
         
-        self.ContParName = self.runDataFiles[0][0][13][0]
+        self.ContParName = self.runDataFiles.ContParName
         # print(self.ContParName)
-        self.CurrContPar = self.runDataFiles[0][0][14][0]
-        self.CurrTOF = self.runDataFiles[0][0][15][0][0]*1e-3
+        self.CurrContPar = self.runDataFiles.CurrContPar
+        self.CurrTOF = self.runDataFiles.CurrTOF*1e-3
         
         self.atomImage = scipy.array(self.imageArray[:,:,0]) 
         #scipy.array is called to make a copy, not a reference
         self.lightImage = scipy.array(self.imageArray[:,:,1])
         self.darkImage = scipy.array(self.imageArray[:,:,2])
 
-        self.magnification = self.hfig_main[0][0][85][0][0][2]
-        self.pixel_size = self.hfig_main[0][0][85][0][0][1][0][0]
-        self.imageRotation = self.hfig_main[0][0][86][0][0][0][0]
-        self.c1 = self.hfig_main[0][0][85][0][0][9]
-        self.s_lambda = self.hfig_main[0][0][85][0][0][11]
-        self.A = self.hfig_main[0][0][85][0][0][10]
+        self.magnification = self.hfig_main.calculation.M
+        self.pixel_size = self.hfig_main.calculation.pixSize
+        self.imageRotation = self.hfig_main.display.imageRotation
+        self.c1 = self.hfig_main.calculation.c1
+        self.s_lambda = self.hfig_main.calculation.s_lambda
+        self.A = self.hfig_main.calculation.A
 
-        self.truncWinX =  self.hfig_main[0][0][85][0][0][7] 
+        self.truncWinX =  self.hfig_main.calculation.truncWinX
         #We really only need two numbers, not the whole list
-        self.truncWinY =  self.hfig_main[0][0][85][0][0][8]
+        self.truncWinY =  self.hfig_main.calculation.truncWinY
 
-        self.atomImage_trunc = self.atomImage[self.truncWinY[0,0]:self.truncWinY[0,-1],
-                                              self.truncWinX[0,0]:self.truncWinX[0,-1]] 
+        self.atomImage_trunc = self.atomImage[self.truncWinY[0]:self.truncWinY[-1],
+                                              self.truncWinX[0]:self.truncWinX[-1]] 
                                               #Do we really want to carry these around?
-        self.lightImage_trunc = self.lightImage[self.truncWinY[0,0]:self.truncWinY[0,-1],
-                                                self.truncWinX[0,0]:self.truncWinX[0,-1]]
-        self.darkImage_trunc = self.darkImage[self.truncWinY[0,0]:self.truncWinY[0,-1],
-                                              self.truncWinX[0,0]:self.truncWinX[0,-1]]
+        self.lightImage_trunc = self.lightImage[self.truncWinY[0]:self.truncWinY[-1],
+                                                self.truncWinX[0]:self.truncWinX[-1]]
+        self.darkImage_trunc = self.darkImage[self.truncWinY[0]:self.truncWinY[-1],
+                                              self.truncWinX[0]:self.truncWinX[-1]]
         return
     
     def truncate_image(self, x1, x2, y1, y2):
@@ -119,7 +119,7 @@ class CloudImage():
     def getAtomNumber(self):
         ODImage = self.getODImage()
         atomNumber = self.A/self.s_lambda*np.sum(ODImage);
-        return atomNumber[0][0]
+        return atomNumber
 
     def gaussian1D(self,x,A,mu,sigma,offset):
         return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
