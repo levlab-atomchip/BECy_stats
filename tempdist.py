@@ -73,6 +73,7 @@ seqs.append(tempseq)
 for seq in seqs:
     # print(seq)
     thisTOFs = [img[1] for img in seq]
+    print thisTOFs
     thiswidthsX = [img[2] for img in seq]
     thiswidthsY = [img[3] for img in seq]
     thischi2X, thisTX = fittemp.temp_chi_2(thisTOFs, thiswidthsX)
@@ -86,11 +87,12 @@ for seq in seqs:
 # temps = hempel.hempel_filter(temps)
 # print temps
     
-# outputfile = dir + 'temps' + '.csv'
-# with open(outputfile, 'w') as f:
-    # writer = csv.writer(f)
-    # for temp in temps:
-        # writer.writerow([temps])
+outputfile = dir + 'temps' + '.csv'
+outputdata = zip(TX, TY, chi2X, chi2Y)
+with open(outputfile, 'w') as f:
+    writer = csv.writer(f)
+    for row in outputdata:
+        writer.writerow(row)
     
     
 # from scipy.stats import gaussian_kde
@@ -108,7 +110,8 @@ temps = TX
 # outlier removal
 temps = hempel.hempel_filter(temps)
 # print temps
-# print(temps)
+print(temps)
+print(chi2X)
 print('TX stats')
 print(np.mean(temps))
 print(np.std(temps))

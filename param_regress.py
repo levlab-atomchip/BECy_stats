@@ -3,7 +3,7 @@ import glob
 import matplotlib.pyplot as plt
 from scipy import stats
 import csv
-dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\loadmot_varyLoadTime\\2013-08-22\\'
+dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\090113\\dipole_num\\2013-09-01\\'
 ContParName = None
 
 imagelist = glob.glob(dir + '*.mat')
@@ -17,7 +17,8 @@ imgind = 1
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
     # print(thisimg.CurrContPar)
-    param_vals.append(thisimg.CurrContPar[0])
+    # param_vals.append(thisimg.CurrContPar[0])
+    param_vals.append(thisimg.getLightCounts())
     # print(param_vals)
     numbers.append(thisimg.getAtomNumber())
     print('Processed %d out of %d images'%(imgind, numimgs))

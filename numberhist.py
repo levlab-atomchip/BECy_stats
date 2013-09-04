@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import hempel
 import csv
-dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\loadmot_many\\first\\'
+from scipy import stats
+dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\090113\\movedipole_num\\2013-09-01\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -12,18 +13,27 @@ numbers = []
 numimgs = len(imagelist)
 imgind = 1
 
+plt.imshow(CloudImage.CloudImage(imagelist[0]).getODImage())
+plt.show()
+
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
     thisnumber = thisimg.getAtomNumber()
     # if thisnumber > 1e6: #cheap bad img check
     numbers.append(thisnumber)
     print('Processed %d out of %d images'%(imgind, numimgs))
+
     imgind += 1
 
 #outlier removal
 numbers = hempel.hempel_filter(numbers)
+# numbers = [x for x in numbers if x < 4e6]
 print numbers
-    
+
+# print(thisimg.truncWinX)
+# print(thisimg.truncWinY)
+
+
 outputfile = dir + 'numbers' + '.csv'
 with open(outputfile, 'w') as f:
     writer = csv.writer(f)
@@ -34,7 +44,6 @@ with open(outputfile, 'w') as f:
     
     
 from scipy.stats import gaussian_kde
-# data = [1.5]*7 + [2.5]*2 + [3.5]*8 + [4.5]*3 + [5.5]*1 + [6.5]*8
 density = gaussian_kde(numbers)
 xs = np.linspace(.75*np.min(numbers),1.25*np.max(numbers),200)
 density.covariance_factor = lambda : .25
@@ -42,13 +51,14 @@ density._compute_covariance()
 plt.plot(xs,density(xs))
 plt.xlabel('Atom Number')
 plt.ylabel('Probability Density')
-plt.title('Number Probability Density, 100 Runs')
+plt.title('Number Probability Density')
 plt.show()
     
 print(numbers)
-print(np.mean(numbers))
-print(np.std(numbers))
-print(2*np.std(numbers)/np.mean(numbers))
+print('%2.2e'%np.mean(numbers))
+print('%2.2e'%np.std(numbers))
+# print('%2.2e'%(2*np.std(numbers)/np.mean(numbers)))
+print('SNR: %2.2f'%stats.signaltonoise(numbers))
 plt.hist(numbers,20)
 plt.show()
 
