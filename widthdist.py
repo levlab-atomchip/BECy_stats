@@ -19,7 +19,6 @@ dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\magellandata082913\\macrocompre
 
 
 
-
 imagelist = glob.glob(dir + '*.mat')
 
 axis = 0 #0 = x, 1 = y
@@ -66,8 +65,8 @@ print dir
 print('%2.2f'%np.mean(widths))
 print('%2.2f'%np.std(widths))
 print('%2.2f'%(np.std(widths)/np.mean(widths)))
-# plt.hist(widths,20)
-# plt.show()
+plt.hist(widths,20)
+plt.show()
 
-# plt.plot(widths, marker='o', linestyle = '--')
-# plt.show()
+plt.plot(widths, marker='o', linestyle = '--')
+plt.show()

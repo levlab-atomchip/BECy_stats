@@ -15,12 +15,12 @@ dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\magellandata082913\\macrocompre
 # dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\magellandata082913\\macrocompress_num_TOF4\\2013-08-29\\'
 
 # dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\magellandata082913\\movedipole_num\\2013-08-29\\'
-# dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\magellandata082913\\movedipole_num_TOF1\\2013-08-29\\'
+dir=r'C:\Users\Levlab\Documents\becy_stats\magellandata082913\macrocompress_num_TOF4\2013-08-29\\'
 
 
 imagelist = glob.glob(dir + '*.mat')
 
-axis = 0 #0 = x, 1 = y
+axis = 1 #0 = x, 1 = y
 positions = []
 numimgs = len(imagelist)
 imgind = 1
@@ -64,8 +64,8 @@ print numimgs
 print('%2.2f'%np.mean(positions))
 print('%2.2f'%np.std(positions))
 print('%2.2f'%(np.std(positions)/np.mean(positions)))
-# plt.hist(positions,20)
-# plt.show()
+plt.hist(positions,20)
+plt.show()
 
-# plt.plot(positions, marker='o', linestyle = '--')
-# plt.show()
+plt.plot(positions, marker='o', linestyle = '--')
+plt.show()

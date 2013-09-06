@@ -5,6 +5,10 @@ import re
 from scipy.optimize import curve_fit
 from scipy.constants import pi, hbar
 import numpy as np
+import matplotlib.pyplot as plt
+
+um=1e6
+ms=1e-3
 
 class CloudImage():
     def __init__(self,fileName,p=None):
@@ -96,7 +100,7 @@ class CloudImage():
             sub_blocks[sub_block_data[i,0][0]] = sub_block_data[i,1][0].astype(str)
         return sub_blocks
 
-    def getVariableValues(self,variable_file):
+    def getVariableDefinition(self,variable_file):
         sub_blocks = self.getVariablesFile()
         variables = sub_blocks[variable_file]
         variables = variables.replace(' ','').replace('\r','')
@@ -114,7 +118,7 @@ class CloudImage():
     def find_nearest(self,array,value):
         idx = (np.abs(array-value)).argmin()
         return [array[idx],idx]
-
+    
     def getODImage(self):
         ODImage = abs(np.log((self.atomImage_trunc 
                             - self.darkImage_trunc).astype(float)
@@ -136,6 +140,7 @@ class CloudImage():
         return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
 
     def gaussian2D(self,xdata, A_x,mu_x,sigma_x,A_y,mu_y,sigma_y,offset):
+        # This doesn't work!
         x = xdata[0]
         y = xdata[1]
         return (A_x*np.exp(-1.*(x-mu_x)**2./(2.*sigma_x**2.)) 
@@ -145,7 +150,7 @@ class CloudImage():
         max_value = image.max()
         max_loc = np.argmax(image)
         [half_max,half_max_ind] = self.find_nearest(image,max_value/2.)
-        hwhm = abs(half_max_ind - max_loc)
+        hwhm = 1.17*abs(half_max_ind - max_loc)
         p_0 = [max_value,max_loc,hwhm,0.] #fit guess
         xdata = np.arange(np.size(image))
         
@@ -180,10 +185,10 @@ class CloudImage():
         if self.ContParName == 'VOID':
             return 'void'
         else:
-            Cont_Param = self.getVariableValues('Variables.m')[self.ContParName]
+            Cont_Param = self.getVariableDefinition('Variables.m')[self.ContParName]
             return Cont_Param[self.CurrContPar]
-    def getParamVal(self, param_name):
-        return self.getVariableValues('Variables.m')[param_name]
+    def getParamDefinition(self, param_name):
+        return self.getVariableDefinition('Variables.m')[param_name]
     def getPos(self, axis = 0):
         image = self.getODImage()
         imgcut = np.sum(image,axis)
@@ -196,6 +201,35 @@ class CloudImage():
         return coefs[2]*self.pixel_size
     def getLightCounts(self):
         return np.sum(self.lightImage - self.darkImage)
-    
+    def getChiSquared1D(self, axis = 0):
+        img_1D = np.sum(self.getODImage(),axis)        
+        coef = self.fitGaussian1D(img_1D)
+        x = np.arange(img_1D.size)
+        fit = self.gaussian1D(x,coef[0],coef[1],coef[2],coef[3])
+        error = img_1D-fit
+        background_1D = np.sum(self.darkImage_trunc,axis)
+        variance = np.std(background_1D)**2
+        chisquare = np.sum((img_1D-fit)**2)/(variance*(img_1D.size-4))
+        return chisquare
         
-        
+    def getvalue(self, var):
+        if 'x' in var:
+            axis = 1 #1 = x, 0 = y
+        if 'y' in var:
+            axis = 0
+        if 'pos' in var:
+            return um*self.getPos(axis)
+        if ('width' in var) or ('sigma' in var):
+            return um*self.getWidth(axis)
+        if 'OD' in var:
+            return self.getODImage()
+        if 'inten' in var:
+            return self.getLightCounts()
+        if 'num' in var:
+            return self.getAtomNumber()
+        if 'chisq' in var:
+            return self.getChiSquared1D(axis)
+        if 'TOF' in var:
+            return self.runDataFiles[0][0][15][0][0]*ms
+        else:
+            return float(self.getParamDefinition(var))
