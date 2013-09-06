@@ -3,7 +3,8 @@ import glob
 import matplotlib.pyplot as plt
 from scipy import stats
 import csv
-dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\090113\\dipole_num\\2013-09-01\\'
+import numpy as np
+dir = r'C:\ImagingSave\statistics\loadmot_varyxbias\2013-09-05\\'
 ContParName = None
 
 imagelist = glob.glob(dir + '*.mat')
@@ -17,10 +18,9 @@ imgind = 1
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
     # print(thisimg.CurrContPar)
-    # param_vals.append(thisimg.CurrContPar[0])
-    param_vals.append(thisimg.getLightCounts())
-    # print(param_vals)
-    numbers.append(thisimg.getAtomNumber())
+    if thisimg.getAtomNumber() < 1e8:
+        param_vals.append(thisimg.CurrContPar)
+        numbers.append(thisimg.getAtomNumber())
     print('Processed %d out of %d images'%(imgind, numimgs))
     imgind += 1
     
@@ -36,11 +36,12 @@ with open(outputfile, 'w') as f:
     
 slope, intercept, r_value, p_value, std_err = stats.linregress(param_vals, numbers)
 
-print("Slope: %f"%slope)
-print("Intercept: %f"%intercept)
-print("Standard Error: %f"%std_err)
+print("Slope: %2.2e"%slope)
+print("Intercept: %2.2e"%intercept)
+print("Standard Error: %2.2e"%std_err)
     
 plt.plot(param_vals,numbers,'.')
+plt.plot(param_vals, slope*np.array(param_vals) + intercept)
 plt.xlabel(ContParName)
 plt.ylabel('Atom Number') 
 plt.show()

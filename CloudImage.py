@@ -63,7 +63,15 @@ class CloudImage():
         self.truncWinX =  self.hfig_main.calculation.truncWinX
         #We really only need two numbers, not the whole list
         self.truncWinY =  self.hfig_main.calculation.truncWinY
-
+        
+        self.flucWinX = self.hfig_main.calculation.flucWinX
+        self.flucWinY = self.hfig_main.calculation.flucWinY
+        intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1],
+                                              self.flucWinX[0]:self.flucWinX[-1]]))
+        intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1],
+                                                self.flucWinX[0]:self.flucWinX[-1]]))
+        self.flucCor = intAtom / intLight
+        
         self.atomImage_trunc = self.atomImage[self.truncWinY[0]:self.truncWinY[-1],
                                               self.truncWinX[0]:self.truncWinX[-1]] 
                                               #Do we really want to carry these around?
@@ -110,15 +118,18 @@ class CloudImage():
     def getODImage(self):
         ODImage = abs(np.log((self.atomImage_trunc 
                             - self.darkImage_trunc).astype(float)
-                            /(self.lightImage_trunc 
+                            /(self.flucCor * self.lightImage_trunc 
                             - self.darkImage_trunc).astype(float)))
         ODImage[np.isnan(ODImage)] = 0
         ODImage[np.isinf(ODImage)] = ODImage[~np.isinf(ODImage)].max()
         return ODImage
         
-    def getAtomNumber(self):
+    def getAtomNumber(self, axis=1):
         ODImage = self.getODImage()
-        atomNumber = self.A/self.s_lambda*np.sum(ODImage);
+        imgcut = np.sum(ODImage,axis)
+        coefs = self.fitGaussian1D(imgcut)
+        offset = coefs[3]
+        atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut));
         return atomNumber
 
     def gaussian1D(self,x,A,mu,sigma,offset):
@@ -177,12 +188,12 @@ class CloudImage():
         image = self.getODImage()
         imgcut = np.sum(image,axis)
         coefs = self.fitGaussian1D(imgcut)
-        return coefs[2]*self.pixel_size
+        return coefs[1]*self.pixel_size
     def getWidth(self, axis=0):
         image = self.getODImage()
         imgcut = np.sum(image,axis)
         coefs = self.fitGaussian1D(imgcut)
-        return coefs[3]*self.pixel_size
+        return coefs[2]*self.pixel_size
     def getLightCounts(self):
         return np.sum(self.lightImage - self.darkImage)
     

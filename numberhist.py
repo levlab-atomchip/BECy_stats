@@ -5,15 +5,16 @@ import numpy as np
 import hempel
 import csv
 from scipy import stats
-dir = r'C:\Users\Will\Documents\becystats\090313\loadmot_num\2013-09-03\\'
+import math
+dir = r'C:\ImagingSave\statistics\dipole_num\2013-09-05\\'
 imagelist = glob.glob(dir + '*.mat')
 
 numbers = []
 numimgs = len(imagelist)
 imgind = 1
 
-plt.imshow(CloudImage.CloudImage(imagelist[0]).getODImage())
-plt.show()
+# plt.imshow(CloudImage.CloudImage(imagelist[0]).getODImage())
+# plt.show()
 
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
@@ -27,7 +28,7 @@ for img in imagelist:
 #outlier removal
 numbers = hempel.hempel_filter(numbers)
 # numbers = [x for x in numbers if x < 4e6]
-print numbers
+# print numbers
 
 # print(thisimg.truncWinX)
 # print(thisimg.truncWinY)
@@ -54,10 +55,11 @@ plt.title('Number Probability Density')
 plt.show()
     
 print(numbers)
-print('%2.2e'%np.mean(numbers))
-print('%2.2e'%np.std(numbers))
+print('Mean: %2.2e'%np.mean(numbers))
+print('StdDev: %2.2e'%np.std(numbers))
 # print('%2.2e'%(2*np.std(numbers)/np.mean(numbers)))
 print('SNR: %2.2f'%stats.signaltonoise(numbers))
+print('sigma_SNR: %2.2f'%(math.sqrt((2 + stats.signaltonoise(numbers)**2) / len(numbers))))
 plt.hist(numbers,20)
 plt.show()
 
