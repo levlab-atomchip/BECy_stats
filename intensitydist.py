@@ -1,11 +1,12 @@
-import CQEDCloudImage
+import CloudImage
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import hempel
 import csv
 from scipy import stats
-dir = r'C:\Users\Levlab\Documents\becy_stats\CQED_ODTImagingSet_9-1-13\\'
+import math
+dir = r'C:\ImagingSave\statistics\no_atoms\2013-09-07\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -13,11 +14,11 @@ intensities = []
 numimgs = len(imagelist)
 imgind = 1
 
-plt.imshow(CQEDCloudImage.CloudImage(imagelist[0]).lightImage)
+plt.imshow(CloudImage.CloudImage(imagelist[0]).atomImage)
 plt.show()
 
 for img in imagelist:
-    thisimg = CQEDCloudImage.CloudImage(img)
+    thisimg = CloudImage.CloudImage(img)
     thisintensity = thisimg.getLightCounts()
     # if thisintensity > 1e6: #cheap bad img check
     intensities.append(thisintensity)
@@ -26,7 +27,7 @@ for img in imagelist:
     imgind += 1
 
 #outlier removal
-# intensities = hempel.hempel_filter(intensities)
+intensities = hempel.hempel_filter(intensities)
 # print intensities
 
 outputfile = dir + 'intensities' + '.csv'
@@ -50,10 +51,11 @@ plt.title('Light Count Probability Density')
 plt.show()
     
 print(intensities)
-print('%2.2e'%np.mean(intensities))
-print('%2.2e'%np.std(intensities))
+print('Mean: %2.2e'%np.mean(intensities))
+print('StdDev: %2.2e'%np.std(intensities))
 # print('%2.2e'%(2*np.std(intensities)/np.mean(intensities)))
 print('SNR: %2.2f'%stats.signaltonoise(intensities))
+print('sigma_SNR: %2.2f'%(math.sqrt((2 + stats.signaltonoise(intensities)**2) / len(intensities))))
 plt.hist(intensities,20)
 plt.show()
 

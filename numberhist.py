@@ -6,7 +6,7 @@ import hempel
 import csv
 from scipy import stats
 import math
-dir = r'C:\ImagingSave\statistics\dipole_num\2013-09-05\\'
+dir = r'C:\ImagingSave\statistics\loadmot_num\2013-09-07\\'
 imagelist = glob.glob(dir + '*.mat')
 
 numbers = []
