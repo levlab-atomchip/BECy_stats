@@ -18,7 +18,7 @@ imgind = 1
 
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
-    thisnumber = thisimg.getAtomNumber()
+    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = True)
     # if thisnumber > 1e6: #cheap bad img check
     numbers.append(thisnumber)
     print('Processed %d out of %d images'%(imgind, numimgs))

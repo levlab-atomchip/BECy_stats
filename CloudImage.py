@@ -119,21 +119,30 @@ class CloudImage():
         idx = (np.abs(array-value)).argmin()
         return [array[idx],idx]
     
-    def getODImage(self):
-        ODImage = abs(np.log((self.atomImage_trunc 
+    def getODImage(self, flucCor_switch = True):
+        if flucCor_switch:
+            ODImage = abs(np.log((self.atomImage_trunc 
                             - self.darkImage_trunc).astype(float)
                             /(self.flucCor * self.lightImage_trunc 
+                            - self.darkImage_trunc).astype(float)))
+        else:
+            ODImage = abs(np.log((self.atomImage_trunc 
+                            - self.darkImage_trunc).astype(float)
+                            /(self.lightImage_trunc 
                             - self.darkImage_trunc).astype(float)))
         ODImage[np.isnan(ODImage)] = 0
         ODImage[np.isinf(ODImage)] = ODImage[~np.isinf(ODImage)].max()
         return ODImage
         
-    def getAtomNumber(self, axis=1):
-        ODImage = self.getODImage()
+    def getAtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True):
+        ODImage = self.getODImage(flucCor_switch)
         imgcut = np.sum(ODImage,axis)
         coefs = self.fitGaussian1D(imgcut)
         offset = coefs[3]
-        atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut));
+        if offset_switch:
+            atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut))
+        else:
+            atomNumber = self.A/self.s_lambda*(np.sum(ODImage))
         return atomNumber
 
     def gaussian1D(self,x,A,mu,sigma,offset):
