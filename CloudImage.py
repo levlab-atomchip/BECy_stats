@@ -85,6 +85,14 @@ class CloudImage():
                                               self.truncWinX[0]:self.truncWinX[-1]]
         return
     
+    def set_fluc_corr(self, x1, x2, y1, y2):
+        intAtom = np.mean(np.mean(self.atomImage[y1:y2,
+                                              x1:x2]))
+        intLight = np.mean(np.mean(self.lightImage[y1:y2,
+                                              x1:x2]))
+        self.flucCor = intAtom / intLight
+    
+    
     def truncate_image(self, x1, x2, y1, y2):
         self.atomImage_trunc = self.atomImage[y1:y2,x1:x2]
         self.lightImage_trunc = self.lightImage[y1:y2,x1:x2]
@@ -134,7 +142,7 @@ class CloudImage():
         ODImage[np.isinf(ODImage)] = ODImage[~np.isinf(ODImage)].max()
         return ODImage
         
-    def getAtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True):
+    def getAtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True, debug_flag = False):
         ODImage = self.getODImage(flucCor_switch)
         imgcut = np.sum(ODImage,axis)
         coefs = self.fitGaussian1D(imgcut)
@@ -143,9 +151,16 @@ class CloudImage():
             atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut))
         else:
             atomNumber = self.A/self.s_lambda*(np.sum(ODImage))
+            
+        if debug_flag:
+            plt.plot(imgcut)
+            params = [range(len(imgcut))]
+            params.extend(coefs)
+            plt.plot(self.gaussian1D(*params))
+            plt.show()
         return atomNumber
 
-    def gaussian1D(self,x,A,mu,sigma,offset):
+    def gaussian1D(self,x,A,mu,sigma,offset, slope):
         return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
 
     def gaussian2D(self,xdata, A_x,mu_x,sigma_x,A_y,mu_y,sigma_y,offset):
@@ -160,7 +175,7 @@ class CloudImage():
         max_loc = np.argmax(image)
         [half_max,half_max_ind] = self.find_nearest(image,max_value/2.)
         hwhm = 1.17*abs(half_max_ind - max_loc)
-        p_0 = [max_value,max_loc,hwhm,0.] #fit guess
+        p_0 = [max_value,max_loc,hwhm,0., 0.] #fit guess
         xdata = np.arange(np.size(image))
         
         try:
@@ -198,8 +213,8 @@ class CloudImage():
             return Cont_Param[self.CurrContPar]
     def getParamDefinition(self, param_name):
         return self.getVariableDefinition('Variables.m')[param_name]
-    def getPos(self, axis = 0):
-        image = self.getODImage()
+    def getPos(self, axis = 0, flucCor_switch = True):
+        image = self.getODImage(flucCor_switch)
         imgcut = np.sum(image,axis)
         coefs = self.fitGaussian1D(imgcut)
         return coefs[1]*self.pixel_size

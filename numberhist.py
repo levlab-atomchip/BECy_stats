@@ -6,7 +6,9 @@ import hempel
 import csv
 from scipy import stats
 import math
-dir = r'C:\ImagingSave\statistics\loadmot_num\2013-09-07\\'
+# dir = r'C:\Users\Will\Documents\becystats\loadmot_many\2340\2013-08-21\\'
+dir = r'C:\Users\Will\Documents\becystats\ModTfrSetup\loadmot_number\2013-11-14\\'
+
 imagelist = glob.glob(dir + '*.mat')
 
 numbers = []
@@ -18,7 +20,8 @@ imgind = 1
 
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
-    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = True)
+    # thisimg.set_fluc_corr(700,750,100,200)
+    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = True, debug_flag = True)
     # if thisnumber > 1e6: #cheap bad img check
     numbers.append(thisnumber)
     print('Processed %d out of %d images'%(imgind, numimgs))

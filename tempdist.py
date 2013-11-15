@@ -11,7 +11,8 @@ import re
 
 
 # User should change this path
-dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\tempdata 082713\\subdop_temp\\2013-08-23\\'
+# dir = 'C:\\Users\\Levlab\\Documents\\becy_stats\\statistics\\tempdata 082713\\subdop_temp\\2013-08-23\\'
+dir = r'C:\Users\Will\Desktop\dimple_trap_temp\\'
 
 imagelist = glob.glob(dir + '*.mat')
 

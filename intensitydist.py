@@ -6,7 +6,9 @@ import hempel
 import csv
 from scipy import stats
 import math
-dir = r'C:\ImagingSave\statistics\no_atoms\2013-09-07\\'
+
+# dir = r'C:\Users\Will\Documents\becystats\loadmot_many\2340\2013-08-21\\'
+dir = r'C:\Users\Will\Documents\becystats\ModTfrSetup\loadmot_number\2013-11-14\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
