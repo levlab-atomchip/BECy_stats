@@ -161,7 +161,7 @@ class CloudImage():
         return atomNumber
 
     def gaussian1D(self,x,A,mu,sigma,offset, slope):
-        return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
+        return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset + slope*np.array(x)
 
     def gaussian2D(self,xdata, A_x,mu_x,sigma_x,A_y,mu_y,sigma_y,offset):
         # This doesn't work!
