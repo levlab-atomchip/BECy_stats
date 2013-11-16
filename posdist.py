@@ -20,8 +20,8 @@ import math
 # dir=r'C:\Users\Levlab\Documents\becy_stats\magellandata082913\macrocompress_num_TOF4\2013-08-29\\'
 
 # dir = r'C:\Users\Will\Documents\becystats\loadmot_many\2340\2013-08-21\\'
-dir = r'C:\Users\Will\Documents\becystats\ModTfrSetup\loadmot_number\2013-11-14\\'
-
+# dir = r'C:\Users\Will\Documents\becystats\ModTfrSetup\loadmot_number\2013-11-14\\'
+dir = r'G:\111513 loadmot number\loadmot_number\2013-11-15\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -32,11 +32,11 @@ imgind = 1
 
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
-    thisimg.set_fluc_corr(700,750,100,200)
+    # thisimg.set_fluc_corr(700,750,100,200)
     thispos = 1e6*thisimg.getPos(axis, flucCor_switch = False)
     # if thispos > 1e6: #cheap bad img check
     positions.append(thispos)
-    # print('Processed %d out of %d images'%(imgind, numimgs))
+    print('Processed %d out of %d images'%(imgind, numimgs))
     imgind += 1
 
 #outlier removal
@@ -79,7 +79,19 @@ print('SNR: %2.2f'%stats.signaltonoise(positions))
 print('sigma_SNR: %2.2f'%(math.sqrt((2 + stats.signaltonoise(positions)**2) / len(positions))))
 
 plt.hist(positions,20)
+plt.xlabel('Atom Number')
+plt.ylabel('Counts')
+if axis == 0:
+    plt.title('X Position Histogram')
+elif axis == 1:
+    plt.title('Z Position Histogram')
 plt.show()
 
 plt.plot(positions, marker='o', linestyle = '--')
+plt.xlabel('Run Number')
+plt.ylabel('Atom Position')
+if axis == 0:
+    plt.title('X Position over Time')
+elif axis == 1:
+    plt.title('Z Position over Time')
 plt.show()

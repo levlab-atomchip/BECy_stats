@@ -12,8 +12,9 @@ dir = r'G:\111513 loadmot number\loadmot_number\2013-11-15\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
-axis = 1 #0 = x, 1 = y
-positions = []
+# axis = 1 #0 = x, 1 = y
+positionsx = []
+positionsy = []
 numbers = []
 numimgs = len(imagelist)
 imgind = 1
@@ -21,12 +22,14 @@ imgind = 1
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
     # thisimg.set_fluc_corr(700,750,100,200)
-    thispos = 1e6*thisimg.getPos(axis, flucCor_switch = False)
-    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = False)
+    thisposx = 1e6*thisimg.getPos(0, flucCor_switch = False)
+    thisposz = 1e6*thisimg.getPos(1, flucCor_switch = False)
+    # thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = False)
     # if thisnumber > 1e6: #cheap bad img check
-    numbers.append(thisnumber)
+    # numbers.append(thisnumber)
     # if thispos > 1e6: #cheap bad img check
-    positions.append(thispos)
+    positionsx.append(thisposx)
+    positionsy.append(thisposz)
     print('Processed %d out of %d images'%(imgind, numimgs))
     imgind += 1
 
@@ -58,7 +61,7 @@ for img in imagelist:
 # print(positions)
 print dir
 print numimgs
-print len(positions)
+print len(positionsx)
 # print('%2.2f'%np.mean(positions))
 # print('%2.2f'%np.std(positions))
 # print('%2.2f'%(np.std(positions)/np.mean(positions)))
@@ -72,13 +75,9 @@ print len(positions)
 # plt.hist(positions,20)
 # plt.show()
 
-plt.plot(positions, numbers, marker='o', linestyle = 'none')
-if axis==0:
-    plt.xlabel('X Position')
-    plt.title('X Position against Atom Number')
-elif axis==1:
-    plt.xlabel('Y Position')
-    plt.title('Y Position against Atom Number')
-plt.ylabel('Atom Number')
-
+plt.plot(positionsx, positionsy, marker='o', linestyle = 'none')
+plt.xlabel('X Position')
+plt.title('X Position against Z Position')
+# plt.title('Y Position')
+plt.ylabel('Z Position')
 plt.show()

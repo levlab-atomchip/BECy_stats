@@ -7,7 +7,7 @@ import csv
 from scipy import stats
 import math
 # dir = r'C:\Users\Will\Documents\becystats\loadmot_many\2340\2013-08-21\\'
-dir = r'C:\Users\Will\Documents\becystats\ModTfrSetup\loadmot_number\2013-11-14\\'
+dir = r'G:\111513 loadmot number\loadmot_number\2013-11-15\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -21,7 +21,7 @@ imgind = 1
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
     # thisimg.set_fluc_corr(700,750,100,200)
-    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = False, debug_flag = True)
+    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = False, debug_flag = False)
     # if thisnumber > 1e6: #cheap bad img check
     numbers.append(thisnumber)
     print('Processed %d out of %d images'%(imgind, numimgs))
@@ -29,7 +29,7 @@ for img in imagelist:
     imgind += 1
 
 #outlier removal
-numbers = hempel.hempel_filter(numbers)
+# numbers = hempel.hempel_filter(numbers)
 # numbers = [x for x in numbers if x < 4e6]
 # print numbers
 
@@ -64,7 +64,13 @@ print('StdDev: %2.2e'%np.std(numbers))
 print('SNR: %2.2f'%stats.signaltonoise(numbers))
 print('sigma_SNR: %2.2f'%(math.sqrt((2 + stats.signaltonoise(numbers)**2) / len(numbers))))
 plt.hist(numbers,20)
+plt.xlabel('Atom Number')
+plt.ylabel('Counts')
+plt.title('Number Histogram')
 plt.show()
 
 plt.plot(numbers, marker='o', linestyle = '--')
+plt.xlabel('Run Number')
+plt.ylabel('Atom Number')
+plt.title('Number over Time')
 plt.show()
