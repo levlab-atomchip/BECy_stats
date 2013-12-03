@@ -6,8 +6,8 @@ import hempel
 import csv
 from scipy import stats
 import math
-
-dir = r'C:\Users\Levlab\Documents\becy_stats\statistics\2013-10-22 ODT Stability\2013-10-22\\'
+# dir = r'D:\ACMData\Statistics\loadmot_number\2013-11-26\\'
+dir = r'D:\ACMData\Statistics\loadmot_number\2013-11-15'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -46,16 +46,16 @@ with open(outputfile, 'w') as f:
         writer.writerow([num])
     
     
-from scipy.stats import gaussian_kde
-density = gaussian_kde(numbers)
-xs = np.linspace(.75*np.min(numbers),1.25*np.max(numbers),200)
-density.covariance_factor = lambda : .25
-density._compute_covariance()
-plt.plot(xs,density(xs))
-plt.xlabel('Atom Number')
-plt.ylabel('Probability Density')
-plt.title('Number Probability Density')
-plt.show()
+# from scipy.stats import gaussian_kde
+# density = gaussian_kde(numbers)
+# xs = np.linspace(.75*np.min(numbers),1.25*np.max(numbers),200)
+# density.covariance_factor = lambda : .25
+# density._compute_covariance()
+# plt.plot(xs,density(xs))
+# plt.xlabel('Atom Number')
+# plt.ylabel('Probability Density')
+# plt.title('Number Probability Density')
+# plt.show()
     
 print(numbers)
 print('Mean: %2.2e'%np.mean(numbers))
