@@ -1,21 +1,19 @@
 import scipy
 import scipy.io
-import parameters
+#import parameters
 import re
 from scipy.optimize import curve_fit
 from scipy.constants import pi, hbar
 import numpy as np
-import matplotlib.pyplot as plt
-
-um=1e6
-ms=1e-3
 
 class CloudImage():
     def __init__(self,fileName,p=None):
         if p==None:
-            self.p = parameters.bfield_parameters()
+            pass
+        #self.p = parameters.bfield_parameters()
         else:
-            self.p=p
+            pass
+            #self.p=p
         
         self.matFile = {}
         self.fileName = fileName
@@ -35,25 +33,28 @@ class CloudImage():
         # self.magnification
         # self.pixel_size
         # self.imageRotation
-        # self.c1 (pixel size times magnification?)
+        # self.c1
         # self.s_lambda
-        # self.A (area of pixel)
+        # self.A
 
     def loadMatFile(self):
+        #scipy.io.loadmat(self.fileName,mdict = self.matFile)
         scipy.io.loadmat(self.fileName,mdict = self.matFile, squeeze_me = True, struct_as_record = False)
+        
         self.imageArray = self.matFile['rawImage']
         self.runDataFiles = self.matFile['runData']
         self.hfig_main = self.matFile['hfig_main']
 
-        # print self.runDataFiles[0][0][13]
-        
+        #self.ContParName = self.runDataFiles[0,0][11][0]
+        #self.CurrContPar = self.runDataFiles[0,0][12][0]
+        #self.CurrTOF = self.runDataFiles[0,0][13][0]
         self.ContParName = self.runDataFiles.ContParName
         # print(self.ContParName)
         self.CurrContPar = self.runDataFiles.CurrContPar
         self.CurrTOF = self.runDataFiles.CurrTOF*1e-3
+
         
-        self.atomImage = scipy.array(self.imageArray[:,:,0]) 
-        #scipy.array is called to make a copy, not a reference
+        self.atomImage = scipy.array(self.imageArray[:,:,0]) #scipy.array is called to make a copy, not a reference
         self.lightImage = scipy.array(self.imageArray[:,:,1])
         self.darkImage = scipy.array(self.imageArray[:,:,2])
 
@@ -64,18 +65,23 @@ class CloudImage():
         self.s_lambda = self.hfig_main.calculation.s_lambda
         self.A = self.hfig_main.calculation.A
 
+        #self.magnification = self.hfig_main[0][0][85][0][0][2]
+        #self.pixel_size = self.hfig_main[0][0][85][0][0][1]
+        #self.imageRotation = self.hfig_main[0][0][86][0][0][0][0]
+        #self.c1 = self.hfig_main[0][0][85][0][0][9]
+        #self.s_lambda = self.hfig_main[0][0][85][0][0][11]
+        #self.A = self.hfig_main[0][0][85][0][0][10]
+
+        #self.truncWinX =  self.hfig_main[0][0][85][0][0][7] #We really only need two numbers, not the whole list
+        #self.truncWinY =  self.hfig_main[0][0][85][0][0][8]
+
         self.truncWinX =  self.hfig_main.calculation.truncWinX
         #We really only need two numbers, not the whole list
         self.truncWinY =  self.hfig_main.calculation.truncWinY
-        
-        self.flucWinX = self.hfig_main.calculation.flucWinX
-        self.flucWinY = self.hfig_main.calculation.flucWinY
-        intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1],
-                                              self.flucWinX[0]:self.flucWinX[-1]]))
-        intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1],
-                                                self.flucWinX[0]:self.flucWinX[-1]]))
-        self.flucCor = intAtom / intLight
-        
+
+        #self.atomImage_trunc = self.atomImage[self.truncWinY[0,0]:self.truncWinY[0,-1],self.truncWinX[0,0]:self.truncWinX[0,-1]] #Do we really want to carry these around?
+        #self.lightImage_trunc = self.lightImage[self.truncWinY[0,0]:self.truncWinY[0,-1],self.truncWinX[0,0]:self.truncWinX[0,-1]]
+        #self.darkImage_trunc = self.darkImage[self.truncWinY[0,0]:self.truncWinY[0,-1],self.truncWinX[0,0]:self.truncWinX[0,-1]]
         self.atomImage_trunc = self.atomImage[self.truncWinY[0]:self.truncWinY[-1],
                                               self.truncWinX[0]:self.truncWinX[-1]] 
                                               #Do we really want to carry these around?
@@ -83,6 +89,7 @@ class CloudImage():
                                                 self.truncWinX[0]:self.truncWinX[-1]]
         self.darkImage_trunc = self.darkImage[self.truncWinY[0]:self.truncWinY[-1],
                                               self.truncWinX[0]:self.truncWinX[-1]]
+        
         return
     
     def set_fluc_corr(self, x1, x2, y1, y2):
@@ -100,44 +107,35 @@ class CloudImage():
 
 
     def getVariablesFile(self):
-        sub_block_data = self.runDataFiles[0][0][12]
-        sub_block_list = sub_block_data[:,0]
-        num_sub_blocks = sub_block_list.size
+        
+        sub_block_data = self.runDataFiles.AllFiles
         sub_blocks = {}
-        for i in np.arange(num_sub_blocks):
-            sub_blocks[sub_block_data[i,0][0]] = sub_block_data[i,1][0].astype(str)
+        for i in xrange(scipy.shape(sub_block_data)[0]):
+            sub_blocks[sub_block_data[i][0]] = sub_block_data[i][1]
         return sub_blocks
+#        sub_block_data = self.runDataFiles[0,0][10]
+#        sub_block_list = sub_block_data[:,0]
+#        num_sub_blocks = sub_block_list.size
+#        sub_blocks = {}
+#        for i in np.arange(num_sub_blocks):
+#            sub_blocks[sub_block_data[i,0][0]] = sub_block_data[i,1][0].astype(str)
+#        return sub_blocks
 
-    def getVariableDefinition(self,variable_file):
-        sub_blocks = self.getVariablesFile()
-        variables = sub_blocks[variable_file]
-        variables = variables.replace(' ','').replace('\r','')
-        variables = variables.split('\n')
-        variables = [i.split('%')[0] for i in variables]
-        variables = [i for i in variables if i != '']
-        variables = [i.replace(';','') for i in variables]
-        variables_dict = {}
-        for i in variables:
-            if i.find('=') > 0:
-                var_name,var_val = i.split('=')
-                variables_dict[var_name] = var_val
+
+    def getVariableValues(self):
+        vars = self.runDataFiles.vars;
+        variables_dict = {};
+        for var in vars:
+            variables_dict[var.name]=var.value;
         return variables_dict
 
     def find_nearest(self,array,value):
         idx = (np.abs(array-value)).argmin()
         return [array[idx],idx]
-    
-    def getODImage(self, flucCor_switch = True):
-        if flucCor_switch:
-            ODImage = abs(np.log((self.atomImage_trunc 
-                            - self.darkImage_trunc).astype(float)
-                            /(self.flucCor * self.lightImage_trunc 
-                            - self.darkImage_trunc).astype(float)))
-        else:
-            ODImage = abs(np.log((self.atomImage_trunc 
-                            - self.darkImage_trunc).astype(float)
-                            /(self.lightImage_trunc 
-                            - self.darkImage_trunc).astype(float)))
+
+    def getODImage(self):
+        #ODImage = abs(np.log((self.atomImage_trunc - self.darkImage_trunc).astype(float)/(self.lightImage_trunc - self.darkImage_trunc).astype(float)))
+        ODImage = abs(np.log((self.atomImage - self.darkImage).astype(float)/(self.lightImage - self.darkImage).astype(float)))
         ODImage[np.isnan(ODImage)] = 0
         ODImage[np.isinf(ODImage)] = ODImage[~np.isinf(ODImage)].max()
         return ODImage
@@ -164,24 +162,19 @@ class CloudImage():
         return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset + slope*np.array(x)
 
     def gaussian2D(self,xdata, A_x,mu_x,sigma_x,A_y,mu_y,sigma_y,offset):
-        # This doesn't work!
         x = xdata[0]
         y = xdata[1]
-        return (A_x*np.exp(-1.*(x-mu_x)**2./(2.*sigma_x**2.)) 
-        + A_y*np.exp(-1.*(y-mu_y)**2./(2.*sigma_y**2.)) + offset)
+        return A_x*np.exp(-1.*(x-mu_x)**2./(2.*sigma_x**2.)) + A_y*np.exp(-1.*(x-mu_y)**2./(2.*sigma_y**2.)) + offset
     
-    def fitGaussian1D(self,image): #fits a 1D Gaussian to a 1D image
+    def fitGaussian1D(self,image): #fits a 1D Gaussian to a 1D image; includes constant offset and linear bias
         max_value = image.max()
         max_loc = np.argmax(image)
         [half_max,half_max_ind] = self.find_nearest(image,max_value/2.)
-        hwhm = 1.17*abs(half_max_ind - max_loc)
+        hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
         p_0 = [max_value,max_loc,hwhm,0., 0.] #fit guess
         xdata = np.arange(np.size(image))
         
-        try:
-            coef, outmat = curve_fit(self.gaussian1D,xdata,image,p0 = p_0)
-        except:
-            coef = p_0
+        coef, outmat = curve_fit(self.gaussian1D,xdata,image,p0 = p_0)
         return coef
 
     def fitGaussian2D(self,image): #fits a 2D Gaussian to a 2D Image
@@ -191,28 +184,26 @@ class CloudImage():
         y_coefs= self.fitGaussian1D(img_y)
         x,y = np.meshgrid(np.arange(img_x.size),np.arange(img_y.size))
 
-        coef, outmat = curve_fit(self.gaussian2D,[x,y],
-                                 image,
-                                 p0 =np.delete(np.append(x_coefs,y_coefs),3))
+        coef, outmat = curve_fit(self.gaussian2D,[x,y],image,p0 =np.delete(np.append(x_coefs,y_coefs),3))
         return coef
 
     def getDensity1D(self,image):
         return self.A/self.s_lambda * image
 
-    def getBField(self,m_F = 2):
-        image_1D = np.sum(self.getODImage(),0)
-        density = self.getDensity1D(image_1D)
-        # This looks wrong, a sensitivity rather than a local B field
-        return 2*hbar*self.p.w_tr*self.p.a_s/(m_F*self.p.g_F*self.p.mu_0)*density
+    # This method is believed to be incorrect.
+    #def getBField(self,m_F = 2):
+    #    image_1D = np.sum(self.getODImage(),0)
+    #    density = self.getDensity1D(image_1D)
+    #    return 2*hbar*self.p.w_tr*self.p.a_s/(m_F*self.p.g_F*self.p.mu_0)*density
 
     def getContParam(self):
         if self.ContParName == 'VOID':
             return 'void'
         else:
-            Cont_Param = self.getVariableDefinition('Variables.m')[self.ContParName]
+            Cont_Param = self.getVariableValues('Variables.m')[self.ContParName]
             return Cont_Param[self.CurrContPar]
     def getParamDefinition(self, param_name):
-        return self.getVariableDefinition('Variables.m')[param_name]
+        return self.getVariableValues()[param_name]
     def getPos(self, axis = 0, flucCor_switch = True):
         image = self.getODImage(flucCor_switch)
         imgcut = np.sum(image,axis)
@@ -236,24 +227,4 @@ class CloudImage():
         chisquare = np.sum((img_1D-fit)**2)/(variance*(img_1D.size-4))
         return chisquare
         
-    def getvalue(self, var):
-        if 'x' in var:
-            axis = 1 #1 = x, 0 = y
-        if 'y' in var:
-            axis = 0
-        if 'pos' in var:
-            return um*self.getPos(axis)
-        if ('width' in var) or ('sigma' in var):
-            return um*self.getWidth(axis)
-        if 'OD' in var:
-            return self.getODImage()
-        if 'inten' in var:
-            return self.getLightCounts()
-        if 'num' in var:
-            return self.getAtomNumber()
-        if 'chisq' in var:
-            return self.getChiSquared1D(axis)
-        if 'TOF' in var:
-            return self.runDataFiles[0][0][15][0][0]*ms
-        else:
-            return float(self.getParamDefinition(var))
+        
