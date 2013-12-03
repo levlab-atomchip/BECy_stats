@@ -133,9 +133,17 @@ class CloudImage():
         idx = (np.abs(array-value)).argmin()
         return [array[idx],idx]
 
-    def getODImage(self):
-        #ODImage = abs(np.log((self.atomImage_trunc - self.darkImage_trunc).astype(float)/(self.lightImage_trunc - self.darkImage_trunc).astype(float)))
-        ODImage = abs(np.log((self.atomImage - self.darkImage).astype(float)/(self.lightImage - self.darkImage).astype(float)))
+    def getODImage(self, flucCor_switch = True):
+        if flucCor_switch:
+            ODImage = abs(np.log((self.atomImage_trunc 
+                            - self.darkImage_trunc).astype(float)
+                            /(self.flucCor * self.lightImage_trunc 
+                            - self.darkImage_trunc).astype(float)))
+        else:
+            ODImage = abs(np.log((self.atomImage_trunc 
+                            - self.darkImage_trunc).astype(float)
+                            /(self.lightImage_trunc 
+                            - self.darkImage_trunc).astype(float)))
         ODImage[np.isnan(ODImage)] = 0
         ODImage[np.isinf(ODImage)] = ODImage[~np.isinf(ODImage)].max()
         return ODImage
