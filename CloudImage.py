@@ -6,6 +6,10 @@ from scipy.optimize import curve_fit
 from scipy.constants import pi, hbar
 import numpy as np
 import matplotlib.pyplot as plt
+<<<<<<< HEAD
+=======
+
+>>>>>>> added linear bias to fits
 
 class CloudImage():
     def __init__(self,fileName,p=None):
@@ -93,9 +97,17 @@ class CloudImage():
                                               
         self.flucWinX = self.hfig_main.calculation.flucWinX
         self.flucWinY = self.hfig_main.calculation.flucWinY
+<<<<<<< HEAD
         intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
         intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
         self.flucCor = intAtom / intLight
+=======
+        intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1],
+                                              self.flucWinX[0]:self.flucWinX[-1]]))
+        intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1],
+                                                self.flucWinX[0]:self.flucWinX[-1]]))
+        self.flucCor = intAtom / intLight  
+>>>>>>> added linear bias to fits
 
         
         return
@@ -156,11 +168,14 @@ class CloudImage():
         ODImage[np.isinf(ODImage)] = ODImage[~np.isinf(ODImage)].max()
         return ODImage
         
-    def getAtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True, debug_flag = False):
+    def getAtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True, debug_flag = False, linear_bias_switch = True):
         ODImage = self.getODImage(flucCor_switch)
         imgcut = np.sum(ODImage,axis)
         try:
-            coefs = self.fitGaussian1D(imgcut)
+            if linear_bias_switch:
+                coefs = self.fitGaussian1D(imgcut)
+            else:
+                coefs = self.fitGaussian1D_noline(imgcut)
         except:
             return 0
         offset = coefs[3]
@@ -179,6 +194,9 @@ class CloudImage():
 
     def gaussian1D(self,x,A,mu,sigma,offset, slope):
         return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset + slope*np.array(x)
+        
+    def gaussian1D_noline(self,x,A,mu,sigma,offset):
+        return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
 
     def gaussian2D(self,xdata, A_x,mu_x,sigma_x,A_y,mu_y,sigma_y,offset):
         x = xdata[0]
@@ -191,6 +209,17 @@ class CloudImage():
         [half_max,half_max_ind] = self.find_nearest(image,max_value/2.)
         hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
         p_0 = [max_value,max_loc,hwhm,0., 0.] #fit guess
+        xdata = np.arange(np.size(image))
+        
+        coef, outmat = curve_fit(self.gaussian1D,xdata,image,p0 = p_0)
+        return coef
+        
+    def fitGaussian1D_noline(self,image): #fits a 1D Gaussian to a 1D image; includes constant offset and linear bias
+        max_value = image.max()
+        max_loc = np.argmax(image)
+        [half_max,half_max_ind] = self.find_nearest(image,max_value/2.)
+        hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
+        p_0 = [max_value,max_loc,hwhm,0.] #fit guess
         xdata = np.arange(np.size(image))
         
         coef, outmat = curve_fit(self.gaussian1D,xdata,image,p0 = p_0)
