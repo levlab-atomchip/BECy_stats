@@ -5,6 +5,7 @@ import re
 from scipy.optimize import curve_fit
 from scipy.constants import pi, hbar
 import numpy as np
+import matplotlib.pyplot as plt
 
 class CloudImage():
     def __init__(self,fileName,p=None):
@@ -89,6 +90,13 @@ class CloudImage():
                                                 self.truncWinX[0]:self.truncWinX[-1]]
         self.darkImage_trunc = self.darkImage[self.truncWinY[0]:self.truncWinY[-1],
                                               self.truncWinX[0]:self.truncWinX[-1]]
+                                              
+        self.flucWinX = self.hfig_main.calculation.flucWinX
+        self.flucWinY = self.hfig_main.calculation.flucWinY
+        intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
+        intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
+        self.flucCor = intAtom / intLight
+
         
         return
     
@@ -151,7 +159,10 @@ class CloudImage():
     def getAtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True, debug_flag = False):
         ODImage = self.getODImage(flucCor_switch)
         imgcut = np.sum(ODImage,axis)
-        coefs = self.fitGaussian1D(imgcut)
+        try:
+            coefs = self.fitGaussian1D(imgcut)
+        except:
+            return 0
         offset = coefs[3]
         if offset_switch:
             atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut))

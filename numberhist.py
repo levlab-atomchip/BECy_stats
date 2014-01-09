@@ -7,7 +7,7 @@ import csv
 from scipy import stats
 import math
 # dir = r'D:\ACMData\Statistics\loadmot_number\2013-11-26\\'
-dir = r'D:\ACMData\Statistics\loadmot_number\2013-11-15'
+dir = r'G:\Statistics\New folder\2014-01-08\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
@@ -21,7 +21,7 @@ imgind = 1
 for img in imagelist:
     thisimg = CloudImage.CloudImage(img)
     # thisimg.set_fluc_corr(700,750,100,200)
-    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = False, debug_flag = False)
+    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = True, debug_flag = True)
     # if thisnumber > 1e6: #cheap bad img check
     numbers.append(thisnumber)
     print('Processed %d out of %d images'%(imgind, numimgs))
@@ -30,8 +30,8 @@ for img in imagelist:
 
 #outlier removal
 # numbers = hempel.hempel_filter(numbers)
-# numbers = [x for x in numbers if x < 4e6]
-# print numbers
+# numbers = [x for x in numbers if x > 1e8]
+print numbers
 
 # print(thisimg.truncWinX)
 # print(thisimg.truncWinY)
