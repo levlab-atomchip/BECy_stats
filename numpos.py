@@ -8,11 +8,11 @@ from scipy import stats
 import math
 
 # dir = r'C:\Users\Will\Documents\becystats\ModTfrSetup\loadmot_number\2013-11-14\\'
-dir = r'G:\111513 loadmot number\loadmot_number\2013-11-15\\'
+dir = r'D:\ACMData\Statistics\moveDipole_number\2014-01-13\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
-axis = 1 #0 = x, 1 = y
+axis = 0 #0 = x, 1 = y
 positions = []
 numbers = []
 numimgs = len(imagelist)

@@ -8,7 +8,7 @@ from scipy import stats
 import math
 
 # dir = r'C:\Users\Will\Documents\becystats\loadmot_many\2340\2013-08-21\\'
-dir = r'G:\Statistics\New folder\2014-01-08\test\\'
+dir = r'D:\ACMData\Statistics\moveDipole_number\2014-01-09\\'
 
 imagelist = glob.glob(dir + '*.mat')
 

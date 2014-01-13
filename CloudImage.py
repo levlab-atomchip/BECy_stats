@@ -6,10 +6,10 @@ from scipy.optimize import curve_fit
 from scipy.constants import pi, hbar
 import numpy as np
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
-=======
 
->>>>>>> added linear bias to fits
+class FitError(Exception):
+    def __init__(self, arg):
+        self.args = arg
 
 class CloudImage():
     def __init__(self,fileName,p=None):
@@ -97,17 +97,9 @@ class CloudImage():
                                               
         self.flucWinX = self.hfig_main.calculation.flucWinX
         self.flucWinY = self.hfig_main.calculation.flucWinY
-<<<<<<< HEAD
         intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
         intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
         self.flucCor = intAtom / intLight
-=======
-        intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1],
-                                              self.flucWinX[0]:self.flucWinX[-1]]))
-        intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1],
-                                                self.flucWinX[0]:self.flucWinX[-1]]))
-        self.flucCor = intAtom / intLight  
->>>>>>> added linear bias to fits
 
         
         return
@@ -177,7 +169,7 @@ class CloudImage():
             else:
                 coefs = self.fitGaussian1D_noline(imgcut)
         except:
-            return 0
+            raise FitError('getAtomNumber')
         offset = coefs[3]
         if offset_switch:
             atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut))
@@ -252,10 +244,16 @@ class CloudImage():
             return Cont_Param[self.CurrContPar]
     def getParamDefinition(self, param_name):
         return self.getVariableValues()[param_name]
-    def getPos(self, axis = 0, flucCor_switch = True):
+    def getPos(self, axis = 0, flucCor_switch = True, linear_bias_switch = True):
         image = self.getODImage(flucCor_switch)
         imgcut = np.sum(image,axis)
-        coefs = self.fitGaussian1D(imgcut)
+        try:
+            if linear_bias_switch:
+                coefs = self.fitGaussian1D(imgcut)
+            else:
+                coefs = self.fitGaussian1D_noline(imgcut)
+        except:
+            raise FitError('getPos')   
         return coefs[1]*self.pixel_size
     def getWidth(self, axis=0):
         image = self.getODImage()
