@@ -12,49 +12,20 @@ class FitError(Exception):
         self.args = arg
 
 class CloudImage():
-    def __init__(self,fileName,p=None):
-        if p==None:
-            pass
-        #self.p = parameters.bfield_parameters()
-        else:
-            pass
-            #self.p=p
-        
+    def __init__(self,fileName):
+       
         self.matFile = {}
         self.fileName = fileName
         self.loadMatFile()
 
-        #we need a control parameter to group images
-        #we need a location variable
-        #we need a way to search for variabgles in the image file
-        
-        # self.hfig_main
-        # self.imageArray
-        # self.runDataFiles
-        # self.atomImage
-        # self.lightImage
-        # self.darkImage
-        
-        # self.magnification
-        # self.pixel_size
-        # self.imageRotation
-        # self.c1
-        # self.s_lambda
-        # self.A
-
     def loadMatFile(self):
-        #scipy.io.loadmat(self.fileName,mdict = self.matFile)
         scipy.io.loadmat(self.fileName,mdict = self.matFile, squeeze_me = True, struct_as_record = False)
         
         self.imageArray = self.matFile['rawImage']
         self.runDataFiles = self.matFile['runData']
         self.hfig_main = self.matFile['hfig_main']
 
-        #self.ContParName = self.runDataFiles[0,0][11][0]
-        #self.CurrContPar = self.runDataFiles[0,0][12][0]
-        #self.CurrTOF = self.runDataFiles[0,0][13][0]
         self.ContParName = self.runDataFiles.ContParName
-        # print(self.ContParName)
         self.CurrContPar = self.runDataFiles.CurrContPar
         self.CurrTOF = self.runDataFiles.CurrTOF*1e-3
 
@@ -70,26 +41,11 @@ class CloudImage():
         self.s_lambda = self.hfig_main.calculation.s_lambda
         self.A = self.hfig_main.calculation.A
 
-        #self.magnification = self.hfig_main[0][0][85][0][0][2]
-        #self.pixel_size = self.hfig_main[0][0][85][0][0][1]
-        #self.imageRotation = self.hfig_main[0][0][86][0][0][0][0]
-        #self.c1 = self.hfig_main[0][0][85][0][0][9]
-        #self.s_lambda = self.hfig_main[0][0][85][0][0][11]
-        #self.A = self.hfig_main[0][0][85][0][0][10]
-
-        #self.truncWinX =  self.hfig_main[0][0][85][0][0][7] #We really only need two numbers, not the whole list
-        #self.truncWinY =  self.hfig_main[0][0][85][0][0][8]
-
         self.truncWinX =  self.hfig_main.calculation.truncWinX
-        #We really only need two numbers, not the whole list
         self.truncWinY =  self.hfig_main.calculation.truncWinY
-
-        #self.atomImage_trunc = self.atomImage[self.truncWinY[0,0]:self.truncWinY[0,-1],self.truncWinX[0,0]:self.truncWinX[0,-1]] #Do we really want to carry these around?
-        #self.lightImage_trunc = self.lightImage[self.truncWinY[0,0]:self.truncWinY[0,-1],self.truncWinX[0,0]:self.truncWinX[0,-1]]
-        #self.darkImage_trunc = self.darkImage[self.truncWinY[0,0]:self.truncWinY[0,-1],self.truncWinX[0,0]:self.truncWinX[0,-1]]
+        
         self.atomImage_trunc = self.atomImage[self.truncWinY[0]:self.truncWinY[-1],
                                               self.truncWinX[0]:self.truncWinX[-1]] 
-                                              #Do we really want to carry these around?
         self.lightImage_trunc = self.lightImage[self.truncWinY[0]:self.truncWinY[-1],
                                                 self.truncWinX[0]:self.truncWinX[-1]]
         self.darkImage_trunc = self.darkImage[self.truncWinY[0]:self.truncWinY[-1],
@@ -99,9 +55,7 @@ class CloudImage():
         self.flucWinY = self.hfig_main.calculation.flucWinY
         intAtom = np.mean(np.mean(self.atomImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
         intLight = np.mean(np.mean(self.lightImage[self.flucWinY[0]:self.flucWinY[-1], self.flucWinX[0]:self.flucWinX[-1]]))
-        self.flucCor = intAtom / intLight
-
-        
+        self.flucCor = intAtom / intLight        
         return
     
     def set_fluc_corr(self, x1, x2, y1, y2):
@@ -125,14 +79,6 @@ class CloudImage():
         for i in xrange(scipy.shape(sub_block_data)[0]):
             sub_blocks[sub_block_data[i][0]] = sub_block_data[i][1]
         return sub_blocks
-#        sub_block_data = self.runDataFiles[0,0][10]
-#        sub_block_list = sub_block_data[:,0]
-#        num_sub_blocks = sub_block_list.size
-#        sub_blocks = {}
-#        for i in np.arange(num_sub_blocks):
-#            sub_blocks[sub_block_data[i,0][0]] = sub_block_data[i,1][0].astype(str)
-#        return sub_blocks
-
 
     def getVariableValues(self):
         vars = self.runDataFiles.vars;
@@ -170,6 +116,8 @@ class CloudImage():
                 coefs = self.fitGaussian1D_noline(imgcut)
         except:
             raise FitError('getAtomNumber')
+            # print('FitError')
+            
         offset = coefs[3]
         if offset_switch:
             atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut))

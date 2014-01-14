@@ -1,0 +1,5 @@
+BECy_stats TODO:
+
+BECy_stats sucks right now. It is scattered and inconsistent and hard to keep up to date and arbitrary. How to improve it? There is too much duplication of similar methods (things like poshist, numberhist, etc).
+
+Ruby started writing CloudDistribution at some point. This is probably the right starting point.
