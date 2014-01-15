@@ -6,14 +6,17 @@ from scipy.optimize import curve_fit
 from scipy.constants import pi, hbar
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+FILE_RE = re.compile(r'.(\d{6})\.mat')
+
 
 class FitError(Exception):
-    def __init__(self, arg):
-        self.args = arg
+    def __init__(self, statement):
+        self.statement = statement
 
 class CloudImage():
-    def __init__(self,fileName):
-       
+    def __init__(self,fileName):       
         self.matFile = {}
         self.fileName = fileName
         self.loadMatFile()
@@ -72,8 +75,7 @@ class CloudImage():
         self.darkImage_trunc = self.darkImage[y1:y2,x1:x2]
 
 
-    def getVariablesFile(self):
-        
+    def getVariablesFile(self):        
         sub_block_data = self.runDataFiles.AllFiles
         sub_blocks = {}
         for i in xrange(scipy.shape(sub_block_data)[0]):
@@ -221,4 +223,51 @@ class CloudImage():
         chisquare = np.sum((img_1D-fit)**2)/(variance*(img_1D.size-4))
         return chisquare
         
+    def getGaussianFitParams(self, flucCor_switch = True, linear_bias_switch = True, debug_flag = False, offset_switch = True):
+        '''This calculates the common parameters extracted from a gaussian fit all at once, returning them in a dictionary.
+        The parameters are: Atom Number, X Position, Z Position, X Width, Z Width, LightCounts'''
+        ODImage = self.getODImage(flucCor_switch)
+        imgcut_x = np.sum(ODImage,0)
+        imgcut_z = np.sum(ODImage, 1)
+        try:
+            if linear_bias_switch:
+                coefs_x = self.fitGaussian1D(imgcut_x)
+            else:
+                coefs_x = self.fitGaussian1D_noline(imgcut_x)
+        except:
+            raise FitError()
+            # print('FitError')
+            
+        try:
+            if linear_bias_switch:
+                coefs_z = self.fitGaussian1D(imgcut_z)
+            else:
+                coefs_z = self.fitGaussian1D_noline(imgcut_z)
+        except:
+            raise FitError()
+            # print('FitError')
         
+        # Using z to get atomNumber; need to add linear bias correction!
+        
+        offset_z = coefs_z[3]
+        if offset_switch:
+            atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset_z*len(imgcut_z))
+        else:
+            atomNumber = self.A/self.s_lambda*(np.sum(ODImage))
+            
+        if debug_flag:
+            plt.plot(imgcut)
+            params = [range(len(imgcut))]
+            params.extend(coefs)
+            plt.plot(self.gaussian1D(*params))
+            plt.show()
+        return {'getAtomNumber': atomNumber, 
+                'getPosX':coefs_x[1]*self.pixel_size, 
+                'getPosZ': coefs_z[1]*self.pixel_size,
+                'getWidthX': coefs_x[2]*self.pixel_size,
+                'getWidthZ': coefs_z[2]*self.pixel_size,
+                'getLightCounts': np.sum(self.lightImage - self.darkImage),
+                'getTimestamp': self.getTimestamp}
+    def getTimestamp(self):
+        thisfilename = os.path.basename(self.fileName)
+        return FILE_RE.search(thisfilename).group(1) #so crude!
