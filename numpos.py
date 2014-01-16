@@ -19,14 +19,14 @@ numimgs = len(imagelist)
 imgind = 1
 
 for img in imagelist:
-    thisimg = CloudImage.CloudImage(img)
-    # thisimg.set_fluc_corr(700,750,100,200)
-    thispos = 1e6*thisimg.getPos(axis, flucCor_switch = False)
-    thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = False)
-    # if thisnumber > 1e6: #cheap bad img check
-    numbers.append(thisnumber)
-    # if thispos > 1e6: #cheap bad img check
-    positions.append(thispos)
+    try:
+        thisimg = CloudImage.CloudImage(img)
+        thispos = 1e6*thisimg.getPos(axis, flucCor_switch = False)
+        thisnumber = thisimg.getAtomNumber(axis=1, offset_switch = True, flucCor_switch = False)
+        numbers.append(thisnumber)
+        positions.append(thispos)
+    except CloudImage.FitError as e:
+        print(e.args)
     print('Processed %d out of %d images'%(imgind, numimgs))
     imgind += 1
 

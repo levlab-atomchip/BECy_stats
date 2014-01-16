@@ -7,19 +7,19 @@ import csv
 from scipy import stats
 import math
 
-dir = r'D:\ACMData\Statistics\moveDipole_number\2014-01-13\\'
+dir = r'D:\ACMData\Statistics\mac_capture_odtaxis\2014-01-13\\'
 
 imagelist = glob.glob(dir + '*.mat')
 
-axis = 0 #0 = x, 1 = y
+axis = 1 #0 = x, 1 = y
 positions = []
 numimgs = len(imagelist)
 imgind = 1
 
 for img in imagelist:
-    thisimg = CloudImage.CloudImage(img)
     try:
-        thispos = 1e6*thisimg.getPos(axis, flucCor_switch = False) #microns
+        thisimg = CloudImage.CloudImage(img)
+        thispos = 1e6*thisimg.getPos(axis, flucCor_switch = False, debug_flag = False, linear_bias_switch = True) #microns
         positions.append(thispos)
     except CloudImage.FitError as e:
         print(e.args)

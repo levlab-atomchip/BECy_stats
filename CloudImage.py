@@ -120,7 +120,11 @@ class CloudImage():
             
         offset = coefs[3]
         if offset_switch:
-            atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut))
+            if linear_bias_switch:
+                slope = coefs[4]
+                atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - 0.5*slope*len(imgcut)**2 - offset*len(imgcut))
+            else:
+                atomNumber = self.A/self.s_lambda*(np.sum(ODImage) - offset*len(imgcut))
         else:
             atomNumber = self.A/self.s_lambda*(np.sum(ODImage))
             
@@ -192,7 +196,7 @@ class CloudImage():
             return Cont_Param[self.CurrContPar]
     def getParamDefinition(self, param_name):
         return self.getVariableValues()[param_name]
-    def getPos(self, axis = 0, flucCor_switch = True, linear_bias_switch = True):
+    def getPos(self, axis = 0, flucCor_switch = True, linear_bias_switch = True, debug_flag = False):
         image = self.getODImage(flucCor_switch)
         imgcut = np.sum(image,axis)
         try:
@@ -202,6 +206,14 @@ class CloudImage():
                 coefs = self.fitGaussian1D_noline(imgcut)
         except:
             raise FitError('getPos')   
+            
+        if debug_flag:
+            plt.plot(imgcut)
+            params = [range(len(imgcut))]
+            params.extend(coefs)
+            plt.plot(self.gaussian1D(*params))
+            plt.show()
+            
         return coefs[1]*self.pixel_size
     def getWidth(self, axis=0):
         image = self.getODImage()
