@@ -1,4 +1,5 @@
 import CloudImage
+from CloudImage import FitError
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
@@ -15,26 +16,31 @@ from win32com.shell import shell, shellcon
 # numberhist, posdist, widthdist, intensitydist, numpos, paramregress, pos_regress, posxvy, twoparamregress
 
 class CloudDistributions():
-    def __init__(self):
-    
-        desktop_pidl = shell.SHGetFolderLocation (0, shellcon.CSIDL_DESKTOP, 0, 0)
-        pidl, display_name, image_list = shell.SHBrowseForFolder (
-          win32gui.GetDesktopWindow (),
-          desktop_pidl,
-          "Choose a folder",
-          0,
-          None,
-          None
-        )
-        self.dir = shell.SHGetPathFromIDList (pidl)
+    def __init__(self, dir = None):
+        
+        if dir is None:
+            desktop_pidl = shell.SHGetFolderLocation (0, shellcon.CSIDL_DESKTOP, 0, 0)
+            pidl, display_name, image_list = shell.SHBrowseForFolder (
+              win32gui.GetDesktopWindow (),
+              desktop_pidl,
+              "Choose a folder",
+              0,
+              None,
+              None
+            )
+            self.dir = shell.SHGetPathFromIDList (pidl)
+            
+        else:
+            self.dir = dir
+            
         print(self.dir)
-    
+        
         self.filelist = glob.glob(self.dir + '\\*.mat')
         self.numimgs = len(self.filelist)
         self.dists = {}
         
         # should always calculate simple dists from gaussians to avoid repetitive calculations
-        gaussian_fit_options = {'flucCor_switch': True, 'linear_bias_switch': True, 'debug_flag': False, 'offset_switch': True}
+        gaussian_fit_options = {'flucCor_switch': False, 'linear_bias_switch': False, 'debug_flag': False, 'offset_switch': True}
         self.initialize_gaussian_params(**gaussian_fit_options)
         
     def initialize_gaussian_params(self, **kwargs):
@@ -61,7 +67,7 @@ class CloudDistributions():
             except AttributeError:
                 print('Invalid Method Name; CloudDistribution and CloudImage are out of sync!')
                 raise AttributeError
-            except CloudImage.FitError:
+            except FitError:
                 print('Fit Error')
         
     def values(self,var, **kwargs):
@@ -95,10 +101,12 @@ class CloudDistributions():
             # for num in data[var]:
                 # writer.writerow([num])
 
-    def plotdistribution(self,var, **kwargs):
+    def plot_distribution(self,var, **kwargs):
+        # numbins = np.ceil(np.power(self.numimgs,0.33))
+        numbins = 20
         if self.does_var_exist(var, **kwargs):
             plt.subplot(121)
-            plt.hist(self.dists[var],np.ceil(np.power(self.numimgs,0.33)))
+            plt.hist(self.dists[var],numbins)
             plt.ylabel('Counts')
             plt.xlabel(var)
             plt.title('Histogram')
@@ -112,9 +120,12 @@ class CloudDistributions():
             print("Variable Does Not Exist")
     
     def plot_gaussian_params(self):
+        numbins = 20
+        # numbins = np.ceil(np.power(self.numimgs,0.33))
+    
         gaussian_params = ["getAtomNumber", "getPosX", "getPosZ", "getWidthsX", "getWidthZ", "getLightCounts"]
         plt.subplot(321)
-        plt.hist(self.dists["getAtomNumber"],np.ceil(np.power(self.numimgs,0.33)))
+        plt.hist(self.dists["getAtomNumber"],numbins)
         plt.ylabel('Counts')
         plt.xlabel("Atom Number")
         plt.title('Number Histogram')
@@ -125,28 +136,29 @@ class CloudDistributions():
         plt.title('Time Series')
         
         plt.subplot(323)
-        plt.plot(self.dists["getPosX"], self.dists["getPosZ"], marker = 'o')
+        plt.scatter(self.dists["getPosX"], self.dists["getPosZ"], marker = 'o')
         plt.ylabel('Z Position')
         plt.xlabel('X Position')
         plt.title('Location of Cloud Center')
         plt.subplot(324)
-        plt.plot(self.dists["getWidthX"], self.dists["getWidthY"], marker = 'o')
+        plt.scatter(self.dists["getWidthX"], self.dists["getWidthZ"], marker = 'o')
         plt.ylabel("Z Width")
         plt.xlabel("X Width")
         plt.title("Cloud Widths")
         
         plt.subplot(325)
-        plt.hist(self.dists["getLightCounts"], np.ceil(np.power(self.numimgs,0.33)))
+        plt.hist(self.dists["getLightCounts"], numbins)
         plt.ylabel('Counts')
         plt.xlabel('Light Counts')
         plt.title('Light Intensity Distribution')
         
         plt.subplot(326)
-        plt.plot(self.dists["getLightCounts"], self.dists["getAtomNumber"], marker = 'o')
+        plt.scatter(self.dists["getLightCounts"], self.dists["getAtomNumber"], marker = 'o')
         plt.xlabel("Light Counts")
         plt.ylabel("Atom Number")
         plt.title("Atom Number vs. Light Intensity")
         
+        plt.tight_layout()
         plt.show()
         
     
@@ -212,7 +224,8 @@ class CloudDistributions():
         
         
 if __name__ == "__main__":
-    my_dists = CloudDistributions()
+    dir = r"D:\ACMData\Statistics\mac_capture_number\2014-01-16\\"
+    my_dists = CloudDistributions(dir)
     
     # atom_number_options =   {"axis": 1,
                             # "offset_switch": True,
@@ -223,14 +236,22 @@ if __name__ == "__main__":
                             # "linear_bias_switch": True}
     # width_options =         {"axis": 0} #x axis
     
-    # my_dists.plotdistribution('getAtomNumber',**atom_number_options)
+    # my_dists.plot_distribution('getAtomNumber',**atom_number_options)
     # my_dists.display_statistics('getAtomNumber',**atom_number_options)
-    # my_dists.plotdistribution('getPosX', **position_options)
+    # my_dists.plot_distribution('getPosX', **position_options)
     # my_dists.display_statistics('getPosX', **position_options)
-    # my_dists.plotdistribution('getWidthX', **width_options)
+    # my_dists.plot_distribution('getWidthX', **width_options)
     # my_dists.display_statistics('getWidthX', **width_options)
-    # my_dists.plotdistribution('getLightCounts')
+    # my_dists.plot_distribution('getLightCounts')
     # my_dists.display_statistics('getLightCounts')
     # my_dists.regression('getPosX', 'getAtomNumber')
     
-    my_dists.plot_gaussian_params()
+    # my_dists.plot_gaussian_params()
+    # my_dists.regression('getPosX', 'getWidthX')
+    # my_dists.regression('getPosX', 'getAtomNumber')
+    # my_dists.regression('getWidthX', 'getAtomNumber')
+    my_dists.plot_distribution('getWidthX')
+    my_dists.display_statistics('getWidthX')
+    
+    my_dists.plot_distribution('getPosX')
+    my_dists.display_statistics('getPosX')
