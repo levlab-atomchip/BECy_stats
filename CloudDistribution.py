@@ -1,3 +1,5 @@
+from numpy import vstack,array
+from scipy.cluster.vq import kmeans,vq
 import CloudImage
 from CloudImage import FitError
 import numpy as np
@@ -221,10 +223,30 @@ class CloudDistributions():
         plt.ylabel(var2) 
         plt.show()
 
-        
-        
+    def kmeans(self, var1, var2, num_clusters):
+        if var1 not in self.dists.keys():
+            print(var1 + ' distribution has not been created.')
+            raise KeyError
+        if var2 not in self.dists.keys():
+            print(var2 + ' distribution has not been created.')
+            raise KeyError
+        # data generation
+        data = np.transpose(array([self.dists[var1], self.dists[var2]]))
+
+        # computing K-Means with K = num_clusters
+        centroids,_ = kmeans(data,num_clusters)
+        # assign each sample to a cluster
+        idx,_ = vq(data,centroids)
+
+        # some plotting using numpy's logical indexing
+        plt.plot(data[idx==0,0],data[idx==0,1],'ob',
+             data[idx==1,0],data[idx==1,1],'or')
+        plt.plot(centroids[:,0],centroids[:,1],'sg',markersize=8)
+        plt.show()
+
+
 if __name__ == "__main__":
-    dir = r"D:\ACMData\Statistics\mac_capture_number\2014-01-16\\"
+    dir = r"C:\Users\Will\Desktop\Levlab Projects\BECy Data\MacCap Num 2014-01-16"
     my_dists = CloudDistributions(dir)
     
     # atom_number_options =   {"axis": 1,
@@ -250,8 +272,9 @@ if __name__ == "__main__":
     # my_dists.regression('getPosX', 'getWidthX')
     # my_dists.regression('getPosX', 'getAtomNumber')
     # my_dists.regression('getWidthX', 'getAtomNumber')
-    my_dists.plot_distribution('getWidthX')
-    my_dists.display_statistics('getWidthX')
+    # my_dists.plot_distribution('getWidthX')
+    # my_dists.display_statistics('getWidthX')
     
-    my_dists.plot_distribution('getPosX')
-    my_dists.display_statistics('getPosX')
+    # my_dists.plot_distribution('getPosX')
+    # my_dists.display_statistics('getPosX')
+    my_dists.kmeans('getPosX', 'getAtomNumber', 2)
