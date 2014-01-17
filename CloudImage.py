@@ -108,7 +108,7 @@ class CloudImage():
         ODImage[np.isinf(ODImage)] = ODImage[~np.isinf(ODImage)].max()
         return ODImage
         
-    def getAtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True, debug_flag = False, linear_bias_switch = True):
+    def AtomNumber(self, axis=1, offset_switch = True, flucCor_switch = True, debug_flag = False, linear_bias_switch = True):
         ODImage = self.getODImage(flucCor_switch)
         imgcut = np.sum(ODImage,axis)
         try:
@@ -117,7 +117,7 @@ class CloudImage():
             else:
                 coefs = self.fitGaussian1D_noline(imgcut)
         except:
-            raise FitError('getAtomNumber')
+            raise FitError('AtomNumber')
             # print('FitError')
             
         offset = coefs[3]
@@ -198,7 +198,7 @@ class CloudImage():
             return Cont_Param[self.CurrContPar]
     def getParamDefinition(self, param_name):
         return self.getVariableValues()[param_name]
-    def getPos(self, axis = 0, flucCor_switch = True, linear_bias_switch = True, debug_flag = False):
+    def Pos(self, axis = 0, flucCor_switch = True, linear_bias_switch = True, debug_flag = False):
         image = self.getODImage(flucCor_switch)
         imgcut = np.sum(image,axis)
         try:
@@ -207,7 +207,7 @@ class CloudImage():
             else:
                 coefs = self.fitGaussian1D_noline(imgcut)
         except:
-            raise FitError('getPos')   
+            raise FitError('Pos')   
             
         if debug_flag:
             plt.plot(imgcut)
@@ -217,12 +217,12 @@ class CloudImage():
             plt.show()
             
         return coefs[1]*self.pixel_size
-    def getWidth(self, axis=0):
+    def Width(self, axis=0):
         image = self.getODImage()
         imgcut = np.sum(image,axis)
         coefs = self.fitGaussian1D(imgcut)
         return coefs[2]*self.pixel_size
-    def getLightCounts(self):
+    def LightCounts(self):
         return np.sum(self.lightImage - self.darkImage)
     def getChiSquared1D(self, axis = 0):
         img_1D = np.sum(self.getODImage(),axis)        
@@ -275,13 +275,13 @@ class CloudImage():
             params.extend(coefs)
             plt.plot(self.gaussian1D(*params))
             plt.show()
-        return {'getAtomNumber': atomNumber, 
-                'getPosX':coefs_x[1]*self.pixel_size if coefs_x[1] is not None else None, 
-                'getPosZ': coefs_z[1]*self.pixel_size,
-                'getWidthX': coefs_x[2]*self.pixel_size  if coefs_x[2] is not None else None,
-                'getWidthZ': coefs_z[2]*self.pixel_size,
-                'getLightCounts': np.sum(self.lightImage - self.darkImage),
-                'getTimestamp': self.getTimestamp}
-    def getTimestamp(self):
+        return {'AtomNumber': atomNumber, 
+                'PosX':coefs_x[1]*self.pixel_size if coefs_x[1] is not None else None, 
+                'PosZ': coefs_z[1]*self.pixel_size,
+                'WidthX': coefs_x[2]*self.pixel_size  if coefs_x[2] is not None else None,
+                'WidthZ': coefs_z[2]*self.pixel_size,
+                'LightCounts': np.sum(self.lightImage - self.darkImage),
+                'Timestamp': self.Timestamp}
+    def Timestamp(self):
         thisfilename = os.path.basename(self.fileName)
         return FILE_RE.search(thisfilename).group(1) #so crude!
