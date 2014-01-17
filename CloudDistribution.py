@@ -110,7 +110,46 @@ class CloudDistributions():
             plt.show()
         else:
             print("Variable Does Not Exist")
+    
+    def plot_gaussian_params(self):
+        gaussian_params = ["getAtomNumber", "getPosX", "getPosZ", "getWidthsX", "getWidthZ", "getLightCounts"]
+        plt.subplot(321)
+        plt.hist(self.dists["getAtomNumber"],np.ceil(np.power(self.numimgs,0.33)))
+        plt.ylabel('Counts')
+        plt.xlabel("Atom Number")
+        plt.title('Number Histogram')
+        plt.subplot(322)
+        plt.plot(self.dists["getAtomNumber"],marker='o',linestyle='--')
+        plt.ylabel("Atom Number")
+        plt.xlabel('Run Number')
+        plt.title('Time Series')
         
+        plt.subplot(323)
+        plt.plot(self.dists["getPosX"], self.dists["getPosZ"], marker = 'o')
+        plt.ylabel('Z Position')
+        plt.xlabel('X Position')
+        plt.title('Location of Cloud Center')
+        plt.subplot(324)
+        plt.plot(self.dists["getWidthX"], self.dists["getWidthY"], marker = 'o')
+        plt.ylabel("Z Width")
+        plt.xlabel("X Width")
+        plt.title("Cloud Widths")
+        
+        plt.subplot(325)
+        plt.hist(self.dists["getLightCounts"], np.ceil(np.power(self.numimgs,0.33)))
+        plt.ylabel('Counts')
+        plt.xlabel('Light Counts')
+        plt.title('Light Intensity Distribution')
+        
+        plt.subplot(326)
+        plt.plot(self.dists["getLightCounts"], self.dists["getAtomNumber"], marker = 'o')
+        plt.xlabel("Light Counts")
+        plt.ylabel("Atom Number")
+        plt.title("Atom Number vs. Light Intensity")
+        
+        plt.show()
+        
+    
     def mean(self,var):
         return self.calc_statistic(var, np.mean)
         
@@ -175,21 +214,23 @@ class CloudDistributions():
 if __name__ == "__main__":
     my_dists = CloudDistributions()
     
-    atom_number_options =   {"axis": 1,
-                            "offset_switch": True,
-                            "flucCor_switch": True,
-                            "debug_flag": False,
-                            "linear_bias_switch": True}
-    position_options =      {"flucCor_switch": True,
-                            "linear_bias_switch": True}
-    width_options =         {"axis": 0} #x axis
+    # atom_number_options =   {"axis": 1,
+                            # "offset_switch": True,
+                            # "flucCor_switch": True,
+                            # "debug_flag": False,
+                            # "linear_bias_switch": True}
+    # position_options =      {"flucCor_switch": True,
+                            # "linear_bias_switch": True}
+    # width_options =         {"axis": 0} #x axis
     
     # my_dists.plotdistribution('getAtomNumber',**atom_number_options)
-    my_dists.display_statistics('getAtomNumber',**atom_number_options)
+    # my_dists.display_statistics('getAtomNumber',**atom_number_options)
     # my_dists.plotdistribution('getPosX', **position_options)
-    my_dists.display_statistics('getPosX', **position_options)
+    # my_dists.display_statistics('getPosX', **position_options)
     # my_dists.plotdistribution('getWidthX', **width_options)
     # my_dists.display_statistics('getWidthX', **width_options)
     # my_dists.plotdistribution('getLightCounts')
     # my_dists.display_statistics('getLightCounts')
-    my_dists.regression('getPosX', 'getAtomNumber')
+    # my_dists.regression('getPosX', 'getAtomNumber')
+    
+    my_dists.plot_gaussian_params()
