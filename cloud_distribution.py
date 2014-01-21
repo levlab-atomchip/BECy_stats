@@ -17,6 +17,8 @@ import math
 import win32gui
 from win32com.shell import shell, shellcon
 
+DEBUG_FLAG = False
+LINEAR_BIAS_SWITCH = True
 
 class CloudDistribution(object):
 
@@ -50,8 +52,8 @@ class CloudDistribution(object):
         # should always calculate simple dists from gaussians
         # to avoid repetitive calculations
         gaussian_fit_options = {'fluc_cor_switch': False,
-                                'linear_bias_switch': False,
-                                'debug_flag': False,
+                                'linear_bias_switch': LINEAR_BIAS_SWITCH,
+                                'debug_flag': DEBUG_FLAG,
                                 'offset_switch': True}
         self.initialize_gaussian_params(**gaussian_fit_options)
 
@@ -156,7 +158,8 @@ class CloudDistribution(object):
         plt.title('Time Series')
 
         plt.subplot(323)
-        plt.scatter(self.dists["position_x"], self.dists["position_z"], marker='o')
+        plt.scatter(self.dists["position_x"],
+                        self.dists["position_z"], marker='o')
         plt.ylabel('Z Position')
         plt.xlabel('X Position')
         plt.title('Location of Cloud Center')

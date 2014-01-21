@@ -8,6 +8,9 @@ from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from math import sqrt
+
+DEBUG_FLAG = False
 
 FILE_RE = re.compile(r'.(\d{6})\.mat')
 
@@ -94,6 +97,13 @@ class CloudImage(object):
         self.mat_file = {}
         self.filename = filename
         self.load_mat_file()
+
+        imaging = self.get_variables_values()['IMAGING']
+        if imaging == 2:
+            self.image_angle_corr = 1 # prod chamber camera is at 45 deg
+            # should really implement this as a camera object that gets passed
+        else:
+            self.image_angle_corr = 1
 
     def load_mat_file(self):
         '''Load a .mat file'''
@@ -270,14 +280,19 @@ class CloudImage(object):
             plt.plot(gaussian_1d(*params))
             plt.show()
 
-        return coefs[1]*self.pixel_size
+        if axis == 0:
+            return ((coefs[1] + self.trunc_win_x[0])*\
+                        image_angle_corr*self.pixel_size / self.magnification)
+        elif axis == 1:
+            return ((coefs[1] + self.trunc_win_y[0])*\
+                        self.pixel_size / self.magnification)
 
     def width(self, axis=0):
         '''return width of integrated cloud OD. axis 0 is X, axis 1 is Z'''
         image = self.get_od_image()
         imgcut = np.sum(image, axis)
         coefs = fit_gaussian_1d(imgcut)
-        return coefs[2]*self.pixel_size
+        return coefs[2]*self.pixel_size / self.magnification
 
     def light_counts(self):
         '''return total counts in light image, for intensity fluctuation'''
@@ -337,15 +352,21 @@ class CloudImage(object):
             plt.plot(imgcut_x)
             params = [range(len(imgcut_x))]
             params.extend(coefs_x)
-            plt.plot(gaussian_1d(*params))
+            if linear_bias_switch:
+                plt.plot(gaussian_1d(*params))
+            else:
+                plt.plot(gaussian_1d_noline(*params))
             plt.show()
         return {'atom_number': atom_number,
-                'position_x':(coefs_x[1]*self.pixel_size
+                'position_x':(self.distconv(coefs_x[1], axis=0)
                                 if coefs_x[1] is not None else None),
-                'position_z': coefs_z[1]*self.pixel_size,
-                'width_x':(coefs_x[2]*self.pixel_size
+                'position_z': (self.distconv(coefs_z[1], axis=1)
+                                if coefs_z[1] is not None else None),
+                'width_x':(coefs_x[2]*self.pixel_size*self.image_angle_corr
+                                        / self.magnification
                                 if coefs_x[2] is not None else None),
-                'width_z': coefs_z[2]*self.pixel_size,
+                'width_z': (coefs_z[2]*self.pixel_size / self.magnification
+                                if coefs_z[2] is not None else None),
                 'light_counts': np.sum(self.light_image - self.dark_image),
                 'timestamp': self.timestamp}
 
@@ -353,3 +374,12 @@ class CloudImage(object):
         '''return timestamp, extracted from filename'''
         thisfilename = os.path.basename(self.filename)
         return FILE_RE.search(thisfilename).group(1) #so crude!
+
+    def distconv(self, pixnum, axis=0):
+        '''Convert pixel number to physical distance from frame corner'''
+        if axis==0:
+            return (((pixnum + self.trunc_win_x[0]) * self.pixel_size
+                * self.image_angle_corr) / self.magnification)
+        elif axis == 1:
+            return ((pixnum + self.trunc_win_y[0])
+                        * self.pixel_size) / self.magnification
