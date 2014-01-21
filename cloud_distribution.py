@@ -90,6 +90,27 @@ class CloudDistribution(object):
 
             except FitError:
                 print 'Fit Error'
+                
+    def control_param_dist(self):
+        '''Creates a distribution for the control parameter'''
+        cont_par_name = None
+        index = 1
+        cont_pars = []
+        for this_file in self.filelist:
+            print 'Processing File %d' % index
+            index += 1
+
+            this_img = cloud_image.CloudImage(this_file)
+            this_img_cont_par_name = this_img.cont_par_name
+            if cont_par_name is None:
+                cont_par_name = this_img_cont_par_name
+            else:
+                if this_img_cont_par_name != cont_par_name:
+                    print 'No single control parameter!'
+                    raise Exception
+            cont_pars.append(this_img.curr_cont_par)
+        self.dists[cont_par_name] = cont_pars
+        
 
     def values(self, var, **kwargs):
         '''Creates a distribution for variable var, either
