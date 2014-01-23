@@ -8,8 +8,10 @@ def hempel_filter(list):
     madm = numpy.median(adm)
     cutoff = 3*madm
     filtered = []
-    for item in list:
+    filt_ind = []
+    for index, item in enumerate(list):
         if abs(item - median) < cutoff:
             filtered.append(item)
-            
-    return filtered
+            filt_ind.append(index)
+
+    return filtered, filt_ind

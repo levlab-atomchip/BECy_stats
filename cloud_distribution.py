@@ -13,6 +13,7 @@ import glob
 import matplotlib.pyplot as plt
 from scipy import stats
 import math
+import hempel
 
 import win32gui
 from win32com.shell import shell, shellcon
@@ -48,6 +49,7 @@ class CloudDistribution(object):
         self.filelist = glob.glob(self.directory + '\\*.mat')
         self.numimgs = len(self.filelist)
         self.dists = {}
+        self.outliers = {}
 
         # should always calculate simple dists from gaussians
         # to avoid repetitive calculations
@@ -90,7 +92,7 @@ class CloudDistribution(object):
 
             except FitError:
                 print 'Fit Error'
-                
+
     def control_param_dist(self):
         '''Creates a distribution for the control parameter'''
         cont_par_name = None
@@ -110,7 +112,7 @@ class CloudDistribution(object):
                     raise Exception
             cont_pars.append(this_img.curr_cont_par)
         self.dists[cont_par_name] = cont_pars
-        
+
 
     def values(self, var, **kwargs):
         '''Creates a distribution for variable var, either
@@ -138,6 +140,39 @@ class CloudDistribution(object):
                 # Add call to Matt's code for dealing with older data!
             var_dist.append(this_value)
         self.dists[var] = var_dist
+
+    def find_outliers(self, var):
+        '''Adds an entry to the outliers dictionary for the given variable,
+        of the form {var : [list of outlier indices]}'''
+        _, bad_indices = hempel.hempel_filter(self.dists[var])
+        self.outliers[var] = bad_indices
+
+    def remove_outliers(self, var):
+        '''Removes entries from all distributions for which the given
+        variable is an outlier.'''
+        if not self.does_var_exist(var):
+            print '%s does not exist!'%var
+            return
+        if var not in self.outliers.keys():
+            self.find_outliers(var)
+        bad_indices = self.outliers[var]
+        for variable in self.dists.keys():
+            temp_dist = [j for i, j in enumerate(self.dists[variable])
+                            if i not in bad_indices]
+            self.dists[variable] = temp_dist
+
+    def does_var_exist(self, var, **kwargs):
+        '''Checks to see if the variable has a distribution defined.
+        If not, attempts to make one.'''
+        if var in self.dists.keys():
+            return True
+        else:
+            try:
+                self.values(var, **kwargs)
+            except AttributeError:
+                print 'Invalid Variable'
+                return False
+            return True
 
     def plot_distribution(self, var, **kwargs):
         '''Plots a histogram and time series of a distribution'''
