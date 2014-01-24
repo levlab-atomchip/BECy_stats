@@ -76,9 +76,9 @@ class CloudDistribution(object):
             print 'Processing File %d' % index
             index += 1
             try:
-                this_img = cloud_image.CloudImage(this_file)
                 this_img_gaussian_params = \
-                    this_img.get_gaussian_fit_params(**kwargs)
+                            self.get_gaussian_params(this_file, **kwargs)
+
                 for key in this_img_gaussian_params.keys():
                     try:
                         self.dists[key].append(this_img_gaussian_params[key])
@@ -87,11 +87,18 @@ class CloudDistribution(object):
                         CloudDistribution and CloudImage are out of sync!'''%key
                         raise AttributeError
                     # relies on same names in this and CloudImage.py!!
-                self.dists['timestamp'].append(this_img.timestamp())
-                self.dists['tof'].append(this_img.curr_tof)
 
             except FitError:
                 print 'Fit Error'
+
+    def get_gaussian_params(self, file, **kwargs):
+        this_img = cloud_image.CloudImage(file)
+        gaussian_params = \
+                    this_img.get_gaussian_fit_params(**kwargs)
+        gaussian_params['timestamp'] = this_img.timestamp()
+        gaussian_params['tof'] = this_img.curr_tof
+        return gaussian_params
+
 
     def control_param_dist(self):
         '''Creates a distribution for the control parameter'''
@@ -342,19 +349,20 @@ class CloudDistribution(object):
 
 
 if __name__ == "__main__":
-    MY_DISTS = CloudDistribution()
+    directory = r'D:\ACMData\Statistics\mac_capture_number\2014-01-23\\'
+    MY_DISTS = CloudDistribution(directory)
 
-    # atom_number_options =   {"axis": 1,
-                            # "offset_switch": True,
-                            # "flucCor_switch": True,
-                            # "debug_flag": False,
-                            # "linear_bias_switch": True}
+    atom_number_options =   {"axis": 1,
+                            "offset_switch": True,
+                            "flucCor_switch": True,
+                            "debug_flag": False,
+                            "linear_bias_switch": True}
     # position_options =      {"flucCor_switch": True,
                             # "linear_bias_switch": True}
     # width_options =         {"axis": 0} #x axis
 
-    # MY_DISTS.plot_distribution('atom_number',**atom_number_options)
-    # MY_DISTS.display_statistics('atom_number',**atom_number_options)
+    MY_DISTS.plot_distribution('atom_number',**atom_number_options)
+    MY_DISTS.display_statistics('atom_number',**atom_number_options)
     # MY_DISTS.plot_distribution('position_x', **position_options)
     # MY_DISTS.display_statistics('position_x', **position_options)
     # MY_DISTS.plot_distribution('width_x', **width_options)
@@ -372,4 +380,4 @@ if __name__ == "__main__":
 
     # MY_DISTS.plot_distribution('position_x')
     # MY_DISTS.display_statistics('position_x')
-    MY_DISTS.kmeans('position_x', 'atom_number', 2)
+    #MY_DISTS.kmeans('position_x', 'atom_number', 2)
