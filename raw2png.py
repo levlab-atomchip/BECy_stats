@@ -6,38 +6,47 @@ import scipy.io
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 
-# dir = r'D:\ACMData\Stability\moveDipole_position_instability\NoHoldRoundTrip\2014-01-20\\'
-dir = r'D:\ACMData\Stability\moveDipole_position_instability\Hold6077NoMove\2014-01-20\\'
+def raw2png(directory, VIEW=1, ROI=1):
 
-filelist = glob.glob(dir + '*.mat')
+    filelist = glob.glob(directory + '*.mat')
 
+    for file in filelist:
+        mat_dict = {}
+        try:
+            scipy.io.loadmat(file, mdict=mat_dict,
+                            squeeze_me=True, struct_as_record=False)
+        except:
+            print(file + ' failed')
+            pass
+        hfig_main = mat_dict['hfig_main']
+        rawimages = mat_dict['rawImage']
+        atom_image = np.nan_to_num(rawimages[:,:,0])
+        light_image = np.nan_to_num(rawimages[:,:,1])
+        dark_image = np.nan_to_num(rawimages[:,:,2])
+        if ROI:
+            trunc_win_x = hfig_main.calculation.truncWinX
+            trunc_win_y = hfig_main.calculation.truncWinY
 
-VIEW = 1
-ROI = 1
+            atom_image = \
+            atom_image[trunc_win_y[0]:trunc_win_y[-1],
+                            trunc_win_x[0]:trunc_win_x[-1]]
+            light_image = \
+            light_image[trunc_win_y[0]:trunc_win_y[-1],
+                            trunc_win_x[0]:trunc_win_x[-1]]
+            dark_image = \
+            dark_image[trunc_win_y[0]:trunc_win_y[-1],
+                            trunc_win_x[0]:trunc_win_x[-1]]
 
-ROIX1 = 300
-ROIX2 = 1100
-ROIY1 = 0
-ROIY2 = 550
+        ODImg = np.absolute(np.log(atom_image + 1) - np.log(light_image + 1))
+        print(file + ' processed')
+        plt.imshow(ODImg, cmap = 'jet')
+        plt.title(file)
+        if VIEW:
+            plt.show()
+        else:
+            plt.savefig(file[:-4]+'.png')
+    print('Directory %s Processed'%directory)
 
-for file in filelist:
-    try:
-        mat_dict = scipy.io.loadmat(file)
-    except:
-        print(file + ' failed')
-        pass
-    rawimages = mat_dict['rawImage']
-    if ROI:
-        atomImg = np.nan_to_num(rawimages[ROIY1:ROIY2,ROIX1:ROIX2,0])
-        lightImg = np.nan_to_num(rawimages[ROIY1:ROIY2,ROIX1:ROIX2,1])
-    else:
-        atomImg = np.nan_to_num(rawimages[:,:,0])
-        lightImg = np.nan_to_num(rawimages[:,:,1])
-    ODImg = np.absolute(np.log(atomImg + 1) - np.log(lightImg + 1))
-    print(file + ' processed')
-    plt.imshow(ODImg, cmap = 'jet')
-    if VIEW:
-        plt.show()
-    else:
-        plt.savefig(file[:-4]+'.png')
-print('Directory %s Processed'%dir)
+if __name__ == "__main__":
+    directory = r'D:\ACMData\Statistics\mac_capture_number\2014-01-23\\'
+    raw2png(directory)
