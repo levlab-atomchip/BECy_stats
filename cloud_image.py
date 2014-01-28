@@ -280,12 +280,7 @@ class CloudImage(object):
             plt.plot(gaussian_1d(*params))
             plt.show()
 
-        if axis == 0:
-            return ((coefs[1] + self.trunc_win_x[0])*\
-                        image_angle_corr*self.pixel_size / self.magnification)
-        elif axis == 1:
-            return ((coefs[1] + self.trunc_win_y[0])*\
-                        self.pixel_size / self.magnification)
+        return(self.distconv(coefs_x[1], axis))
 
     def width(self, axis=0):
         '''return width of integrated cloud OD. axis 0 is X, axis 1 is Z'''
@@ -296,7 +291,7 @@ class CloudImage(object):
 
     def light_counts(self):
         '''return total counts in light image, for intensity fluctuation'''
-        return np.sum(self.light_image - self.dark_image)
+        return np.sum((self.light_image - self.dark_image).astype(float))
 
     def get_chi_squared_1d(self, axis=0):
         '''return goodness of fit for 1D gaussian'''
@@ -317,8 +312,11 @@ class CloudImage(object):
                                 offset_switch=True):
         '''This calculates the common parameters extracted
         from a gaussian fit all at once, returning them in a dictionary.
-        The parameters are: Atom Number, X positionition, Z positionition,
-                            X Width, Z Width, light_counts'''
+        The parameters are: Atom Number, X position, Z position,
+                            X Width, Z Width, light_counts
+
+        This is a separate method so that the fit only needs to be done once.
+        This is probably suboptimal.'''
         od_image = self.get_od_image(fluc_cor_switch)
         imgcut_x = np.sum(od_image, 0)
         imgcut_z = np.sum(od_image, 1)
@@ -367,7 +365,8 @@ class CloudImage(object):
                                 if coefs_x[2] is not None else None),
                 'width_z': (coefs_z[2]*self.pixel_size / self.magnification
                                 if coefs_z[2] is not None else None),
-                'light_counts': np.sum(self.light_image - self.dark_image),
+                'light_counts': np.sum((self.light_image - self.dark_image)
+                                                .astype(float)),
                 'timestamp': self.timestamp}
 
     def timestamp(self):
@@ -377,9 +376,16 @@ class CloudImage(object):
 
     def distconv(self, pixnum, axis=0):
         '''Convert pixel number to physical distance from frame corner'''
-        if axis==0:
+        if axis == 0:
             return (((pixnum + self.trunc_win_x[0]) * self.pixel_size
                 * self.image_angle_corr) / self.magnification)
         elif axis == 1:
             return ((pixnum + self.trunc_win_y[0])
                         * self.pixel_size) / self.magnification
+
+    def lengthconv(self, length, axis):
+        if axis == 0:
+            return ((length * self.pixel_size
+                * self.image_angle_corr) / self.magnification)
+        elif axis == 1:
+            return (length * self.pixel_size) / self.magnification
