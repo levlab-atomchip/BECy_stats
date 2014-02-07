@@ -20,6 +20,7 @@ from win32com.shell import shell, shellcon
 
 DEBUG_FLAG = False
 LINEAR_BIAS_SWITCH = True
+FLUC_COR_SWITCH = True
 
 class CloudDistribution(object):
 
@@ -53,7 +54,7 @@ class CloudDistribution(object):
 
         # should always calculate simple dists from gaussians
         # to avoid repetitive calculations
-        gaussian_fit_options = {'fluc_cor_switch': False,
+        gaussian_fit_options = {'fluc_cor_switch': FLUC_COR_SWITCH,
                                 'linear_bias_switch': LINEAR_BIAS_SWITCH,
                                 'debug_flag': DEBUG_FLAG,
                                 'offset_switch': True}
@@ -119,6 +120,40 @@ class CloudDistribution(object):
                     raise Exception
             cont_pars.append(this_img.curr_cont_par)
         self.dists[cont_par_name] = cont_pars
+
+    def temperature_groups(self):
+        '''Creates a list of lists of images in the same temperature set'''
+        # This method assumes without warrant that the images are sorted
+        # by timestamp in each distribution. Does that make me a bad person?
+        tempseq = []
+        seqs = []
+        last_TOF = -1 # All valid TOFs are larger than this.
+        for index, this_TOF in enumerate(self.dists['tof']):
+            if this_TOF < last_TOF:
+                seqs.append(tempseq)
+                tempseq = []
+                tempseq.append(index)
+            else:
+                tempseq.append(index)
+            last_TOF = this_TOF
+        seqs.append(tempseq)
+        self.dists['temperature_groups'] = seqs
+
+    def create_temperature_dist(self):
+        '''Calculates temperatures, given temperature groups'''
+        # code for checking that temp groups exists needed
+        for temp_group in self.dists['temperature_groups']:
+            this_widths_x = [self.dists['width_x'][index]
+                                for index in temp_group]
+            this_widths_z = [self.dists['width_z'][index]
+                                for index in temp_group]
+            this_tofs = [self.dists['tof'][index] for index in temp_group]
+            this_temp_x = fittemp.fittemp(this_tofs, this_widths_x)
+            this_temp_z = fittemp.fittemp(this_tofs, this_widths_z)
+            temp_x.append(this_temp_x)
+            temp_z.append(this_temp_z)
+        self.dists['temp_x'] = temp_x
+        self.dists['temp_z'] = temp_z
 
 
     def values(self, var, **kwargs):
