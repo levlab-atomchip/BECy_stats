@@ -4,6 +4,7 @@ Right now this can provide the functionality of:
 numberhist, posdist, widthdist, intensitydist, numpos,
     paramregress, pos_regress, posxvy, twoparamregress'''
 
+import fittemp
 from numpy import array
 from scipy.cluster.vq import kmeans, vq
 import cloud_image
@@ -139,17 +140,20 @@ class CloudDistribution(object):
         seqs.append(tempseq)
         self.dists['temperature_groups'] = seqs
 
-    def create_temperature_dist(self):
+    def temp_dist(self):
         '''Calculates temperatures, given temperature groups'''
         # code for checking that temp groups exists needed
+        self.temperature_groups()
+        temp_x = []
+        temp_z = []
         for temp_group in self.dists['temperature_groups']:
             this_widths_x = [self.dists['width_x'][index]
                                 for index in temp_group]
             this_widths_z = [self.dists['width_z'][index]
                                 for index in temp_group]
             this_tofs = [self.dists['tof'][index] for index in temp_group]
-            this_temp_x = fittemp.fittemp(this_tofs, this_widths_x)
-            this_temp_z = fittemp.fittemp(this_tofs, this_widths_z)
+            this_temp_x, _ = fittemp.fittemp(this_tofs, this_widths_x)
+            this_temp_z, _ = fittemp.fittemp(this_tofs, this_widths_z)
             temp_x.append(this_temp_x)
             temp_z.append(this_temp_z)
         self.dists['temp_x'] = temp_x
