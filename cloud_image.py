@@ -7,8 +7,10 @@ import re
 from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import os
 from math import sqrt
+
 
 DEBUG_FLAG = False
 
@@ -124,11 +126,16 @@ class CloudImage(object):
         self.dark_image = scipy.array(self.image_array[:, :, 2])
 
         self.magnification = self.hfig_main.calculation.M
+        self.magnification = 0.2347
+        print "Hardcoded magnification to BECy value while debugging! cloud_image.py line 128"
+        print "Magnification: %2.2f"%self.magnification
         self.pixel_size = self.hfig_main.calculation.pixSize
         self.image_rotation = self.hfig_main.display.imageRotation
         self.c1 = self.hfig_main.calculation.c1 # what is this?
         self.s_lambda = self.hfig_main.calculation.s_lambda #what is this?
         self.A = self.hfig_main.calculation.A #what is this?
+        self.A = 2.5529e-010
+        print 'Hardcoded A to BECy value while debugging! cloud_image.py line 136'
 
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
@@ -347,13 +354,25 @@ class CloudImage(object):
             atom_number = self.A/self.s_lambda*(np.sum(od_image))
 
         if debug_flag:
-            plt.plot(imgcut_x)
+            fig = plt.figure()
+            ax1 = fig.add_subplot(121)
+            ax1.plot(imgcut_x)
             params = [range(len(imgcut_x))]
             params.extend(coefs_x)
             if linear_bias_switch:
-                plt.plot(gaussian_1d(*params))
+                ax1.plot(gaussian_1d(*params))
             else:
-                plt.plot(gaussian_1d_noline(*params))
+                ax1.plot(gaussian_1d_noline(*params))
+            ax2 = fig.add_subplot(122)
+            ax2.imshow(self.atom_image)
+            roi_width = self.trunc_win_x[-1] - self.trunc_win_x[0]
+            roi_height = self.trunc_win_y[-1] - self.trunc_win_y[0]
+            ROI_box = mpatches.Rectangle((self.trunc_win_x[0],self.trunc_win_y[0]), roi_width, roi_height, fill=False)
+            fluc_width = self.fluc_win_x[-1] - self.fluc_win_x[0]
+            fluc_height = self.fluc_win_y[-1] - self.fluc_win_y[0]
+            fluc_box = mpatches.Rectangle((self.fluc_win_x[0], self.fluc_win_y[0]), fluc_width, fluc_height, fill=False)
+            ax2.add_patch(ROI_box)
+            ax2.add_patch(fluc_box)
             plt.show()
         return {'atom_number': atom_number,
                 'position_x':(self.distconv(coefs_x[1], axis=0)

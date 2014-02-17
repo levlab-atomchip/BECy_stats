@@ -19,9 +19,9 @@ import hempel
 import win32gui
 from win32com.shell import shell, shellcon
 
-DEBUG_FLAG = False
+DEBUG_FLAG = True
 LINEAR_BIAS_SWITCH = True
-FLUC_COR_SWITCH = True
+FLUC_COR_SWITCH = False
 
 class CloudDistribution(object):
 
@@ -334,7 +334,7 @@ class CloudDistribution(object):
             print 'StdDev: %2.2e' % self.std(var)
             print 'SNR: %2.2f' % self.signaltonoise(var)
             print 'sigma_SNR: %2.2f\n' % (math.sqrt((2 +
-                    self.signaltonoise(var) ** 2) / len(var)))
+                    self.signaltonoise(var) ** 2) / len(self.dists[var])))
         else:
             print 'Variable does not exist!'
 
@@ -386,7 +386,8 @@ class CloudDistribution(object):
         plt.plot(centroids[:, 0], centroids[:, 1], 'sg', markersize=8)
         plt.show()
 
-
+CD = CloudDistribution
+        
 if __name__ == "__main__":
     directory = r'D:\ACMData\Statistics\mac_capture_number\2014-01-23\\'
     MY_DISTS = CloudDistribution(directory)

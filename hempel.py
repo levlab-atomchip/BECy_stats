@@ -10,7 +10,7 @@ def hempel_filter(list):
     filtered = []
     filt_ind = []
     for index, item in enumerate(list):
-        if abs(item - median) < cutoff:
+        if abs(item - median) > cutoff:
             filtered.append(item)
             filt_ind.append(index)
 
