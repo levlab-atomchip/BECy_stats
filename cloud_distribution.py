@@ -19,9 +19,9 @@ import hempel
 import win32gui
 from win32com.shell import shell, shellcon
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 LINEAR_BIAS_SWITCH = True
-FLUC_COR_SWITCH = False
+FLUC_COR_SWITCH = True
 
 class CloudDistribution(object):
 

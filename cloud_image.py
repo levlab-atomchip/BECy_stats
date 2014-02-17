@@ -126,16 +126,11 @@ class CloudImage(object):
         self.dark_image = scipy.array(self.image_array[:, :, 2])
 
         self.magnification = self.hfig_main.calculation.M
-        self.magnification = 0.2347
-        print "Hardcoded magnification to BECy value while debugging! cloud_image.py line 128"
-        print "Magnification: %2.2f"%self.magnification
         self.pixel_size = self.hfig_main.calculation.pixSize
         self.image_rotation = self.hfig_main.display.imageRotation
         self.c1 = self.hfig_main.calculation.c1 # what is this?
         self.s_lambda = self.hfig_main.calculation.s_lambda #what is this?
         self.A = self.hfig_main.calculation.A #what is this?
-        self.A = 2.5529e-010
-        print 'Hardcoded A to BECy value while debugging! cloud_image.py line 136'
 
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
@@ -152,13 +147,9 @@ class CloudImage(object):
 
         self.fluc_win_x = self.hfig_main.calculation.flucWinX
         self.fluc_win_y = self.hfig_main.calculation.flucWinY
-        int_atom = np.mean(np.mean(
-                self.atom_image[self.fluc_win_y[0]:self.fluc_win_y[-1],
-                self.fluc_win_x[0]:self.fluc_win_x[-1]]))
-        int_light = np.mean(np.mean(
-                self.light_image[self.fluc_win_y[0]:self.fluc_win_y[-1],
-                self.fluc_win_x[0]:self.fluc_win_x[-1]]))
-        self.fluc_cor = int_atom / int_light
+        
+        self.set_fluc_corr(self.fluc_win_x[0], self.fluc_win_x[-1], self.fluc_win_y[0], self.fluc_win_y[-1])
+        
         return
 
     def set_fluc_corr(self, x1, x2, y1, y2):
@@ -168,6 +159,9 @@ class CloudImage(object):
         int_light = np.mean(np.mean(self.light_image[y1:y2,
                                               x1:x2]))
         self.fluc_cor = int_atom / int_light
+        self.fluc_cor_corner = (x1, y1)
+        self.fluc_cor_width = x2 - x1
+        self.fluc_cor_height = y2 - y1
 
     def truncate_image(self, x1, x2, y1, y2):
         '''Crop OD image within given coordinates'''
@@ -192,18 +186,26 @@ class CloudImage(object):
             variables_dict[variable.name] = variable.value
         return variables_dict
 
-    def get_od_image(self, fluc_cor_switch=True):
+    def get_od_image(self, fluc_cor_switch=True, trunc_switch=True):
         '''return the optical density image'''
-        if fluc_cor_switch:
-            od_image = abs(np.log((self.atom_image_trunc
-                            - self.dark_image_trunc).astype(float)
-                            /(self.fluc_cor * self.light_image_trunc
-                            - self.dark_image_trunc).astype(float)))
+        if trunc_switch:
+            a_img = self.atom_image_trunc
+            d_img = self.dark_image_trunc
+            l_img = self.light_image_trunc
         else:
-            od_image = abs(np.log((self.atom_image_trunc
-                            - self.dark_image_trunc).astype(float)
-                            /(self.light_image_trunc
-                            - self.dark_image_trunc).astype(float)))
+            a_img = self.atom_image
+            d_img = self.dark_image
+            l_img = self.light_image
+        if fluc_cor_switch:
+            od_image = abs(np.log((a_img
+                            - d_img).astype(float)
+                            /(self.fluc_cor * l_img
+                            - d_img).astype(float)))
+        else:
+            od_image = abs(np.log((a_img
+                            - d_img).astype(float)
+                            /(l_img
+                            - d_img).astype(float)))
         od_image[np.isnan(od_image)] = 0
         od_image[np.isinf(od_image)] = od_image[~np.isinf(od_image)].max()
         return od_image
@@ -354,8 +356,9 @@ class CloudImage(object):
             atom_number = self.A/self.s_lambda*(np.sum(od_image))
 
         if debug_flag:
+            full_od_img = self.get_od_image(fluc_cor_switch, trunc_switch=False)
             fig = plt.figure()
-            ax1 = fig.add_subplot(121)
+            ax1 = fig.add_subplot(131)
             ax1.plot(imgcut_x)
             params = [range(len(imgcut_x))]
             params.extend(coefs_x)
@@ -363,17 +366,19 @@ class CloudImage(object):
                 ax1.plot(gaussian_1d(*params))
             else:
                 ax1.plot(gaussian_1d_noline(*params))
-            ax2 = fig.add_subplot(122)
-            ax2.imshow(self.atom_image)
+            ax2 = fig.add_subplot(132)
+            ax2.imshow(full_od_img)
             roi_width = self.trunc_win_x[-1] - self.trunc_win_x[0]
             roi_height = self.trunc_win_y[-1] - self.trunc_win_y[0]
-            ROI_box = mpatches.Rectangle((self.trunc_win_x[0],self.trunc_win_y[0]), roi_width, roi_height, fill=False)
-            fluc_width = self.fluc_win_x[-1] - self.fluc_win_x[0]
-            fluc_height = self.fluc_win_y[-1] - self.fluc_win_y[0]
-            fluc_box = mpatches.Rectangle((self.fluc_win_x[0], self.fluc_win_y[0]), fluc_width, fluc_height, fill=False)
+            ROI_box = mpatches.Rectangle((self.trunc_win_x[0],self.trunc_win_y[0]), roi_width, roi_height, fill=False, color='g', linewidth=2.5)
+            fluc_box = mpatches.Rectangle(self.fluc_cor_corner, self.fluc_cor_width, self.fluc_cor_height, fill=False, color='m', linewidth=2.5)
             ax2.add_patch(ROI_box)
             ax2.add_patch(fluc_box)
+            ax3 = fig.add_subplot(133)
+            ax3.imshow(od_image)
             plt.show()
+            
+            print "Fluctuation window: (%d, %d) to (%d, %d)"%(self.fluc_win_x[0], self.fluc_win_y[0], self.fluc_win_x[-1], self.fluc_win_y[-1])
         return {'atom_number': atom_number,
                 'position_x':(self.distconv(coefs_x[1], axis=0)
                                 if coefs_x[1] is not None else None),
