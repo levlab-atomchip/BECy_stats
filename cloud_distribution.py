@@ -355,7 +355,7 @@ class CloudDistribution(object):
         print "Slope: %2.2e" % slope
         print "Intercept: %2.2e" % intercept
         print "Standard Error: %2.2e" % std_err
-        print "R Value: %2.2e" % r_value
+        print "R^2 Value: %2.2e" % r_value**2
         plt.plot(self.dists[var1], self.dists[var2], '.')
         plt.plot(
             self.dists[var1],
@@ -385,6 +385,20 @@ class CloudDistribution(object):
                  data[idx == 1, 0], data[idx == 1, 1], 'or')
         plt.plot(centroids[:, 0], centroids[:, 1], 'sg', markersize=8)
         plt.show()
+        
+    def average_image(self):
+        firstimg = cloud_image.CloudImage(self.filelist[0])
+        avg_img = np.zeros(np.shape(firstimg.get_od_image()))
+    
+        for this_file in self.filelist:
+            this_img = cloud_image.CloudImage(this_file)
+            avg_img += this_img.get_od_image()
+        
+        avg_img = avg_img / len(self.filelist)
+        
+        return avg_img
+            
+    
 
 CD = CloudDistribution
         

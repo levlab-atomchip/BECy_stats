@@ -99,13 +99,14 @@ class CloudImage(object):
         self.mat_file = {}
         self.filename = filename
         self.load_mat_file()
-
-        imaging = self.get_variables_values()['IMAGING']
-        if imaging == 2:
-            self.image_angle_corr = 1 # prod chamber camera is at 45 deg
-            # should really implement this as a camera object that gets passed
-        else:
-            self.image_angle_corr = 1
+        
+        # imaging = self.get_variables_values()['IMAGING']
+        # if imaging == 2:
+            # self.image_angle_corr = 1 # prod chamber camera is at 45 deg
+            # # should really implement this as a camera object that gets passed
+        # else:
+            # self.image_angle_corr = 1
+        self.image_angle_corr = 1 #this is not really implemented yet.
 
     def load_mat_file(self):
         '''Load a .mat file'''
@@ -183,7 +184,11 @@ class CloudImage(object):
         variables = self.run_data_files.vars
         variables_dict = {}
         for variable in variables:
-            variables_dict[variable.name] = variable.value
+            try:
+                variables_dict[variable.name] = variable.value
+            except AttributeError:
+                print("Warning: vars data structure is not formatted correctly, internal variables not available")
+                return
         return variables_dict
 
     def get_od_image(self, fluc_cor_switch=True, trunc_switch=True):
@@ -345,7 +350,7 @@ class CloudImage(object):
                 coefs_z = fit_gaussian_1d_noline(imgcut_z)
         except:
             print 'Fit Error in Z'
-        coefs_z = fit_gaussian_1d_noline(imgcut_z)
+        
         # Using z to get atom_number; need to add linear bias correction!
 
         offset_z = coefs_z[3]
