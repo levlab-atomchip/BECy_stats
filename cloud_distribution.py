@@ -386,17 +386,35 @@ class CloudDistribution(object):
         plt.plot(centroids[:, 0], centroids[:, 1], 'sg', markersize=8)
         plt.show()
         
-    def average_image(self):
+    def get_average_image(self):
         firstimg = cloud_image.CloudImage(self.filelist[0])
         avg_img = np.zeros(np.shape(firstimg.get_od_image()))
     
         for this_file in self.filelist:
-            this_img = cloud_image.CloudImage(this_file)
-            avg_img += this_img.get_od_image()
+            this_img = cloud_image.CloudImage(this_file).get_od_image()
+            avg_img += this_img
         
         avg_img = avg_img / len(self.filelist)
+        self.avg_img = avg_img
         
         return avg_img
+        
+    def get_snr_map(self):
+        if not hasattr(self, 'avg_img'):
+            self.get_average_image()
+        var_img = np.zeros(np.shape(self.avg_img))
+        
+        for this_file in self.filelist:
+            this_img = cloud_image.CloudImage(this_file).get_od_image()
+            var_img += (this_img - self.avg_img)**2
+            
+        var_img /= self.numimgs
+        
+        self.var_img = var_img
+        self.std_img = np.sqrt(var_img)
+        self.snr_map = self.avg_img / self.std_img
+        
+        return self.snr_map
             
     
 
