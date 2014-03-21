@@ -187,20 +187,20 @@ class CloudDistribution(object):
             var_dist.append(this_value)
         self.dists[var] = var_dist
 
-    def find_outliers(self, var):
+    def find_outliers(self, var, nMADM):
         '''Adds an entry to the outliers dictionary for the given variable,
         of the form {var : [list of outlier indices]}'''
-        _, bad_indices = hempel.hempel_filter(self.dists[var])
+        _, bad_indices = hempel.hempel_filter(self.dists[var], nMADM)
         self.outliers[var] = bad_indices
 
-    def remove_outliers(self, var):
+    def remove_outliers(self, var, nMADM = 3):
         '''Removes entries from all distributions for which the given
         variable is an outlier.'''
         if not self.does_var_exist(var):
             print '%s does not exist!'%var
             return
         if var not in self.outliers.keys():
-            self.find_outliers(var)
+            self.find_outliers(var, nMADM)
         bad_indices = self.outliers[var]
         for variable in self.dists.keys():
             temp_dist = [j for i, j in enumerate(self.dists[variable])

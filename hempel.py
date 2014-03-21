@@ -2,11 +2,11 @@
 
 import numpy
 
-def hempel_filter(list):
+def hempel_filter(list, nMADM = 3):
     median = numpy.median(list)
     adm = [abs(x - median) for x in list]
     madm = numpy.median(adm)
-    cutoff = 3*madm
+    cutoff = nMADM*madm
     filtered = []
     filt_ind = []
     for index, item in enumerate(list):
