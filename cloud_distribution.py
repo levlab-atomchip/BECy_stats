@@ -20,8 +20,8 @@ import win32gui
 from win32com.shell import shell, shellcon
 
 DEBUG_FLAG = False
-LINEAR_BIAS_SWITCH = True
-FLUC_COR_SWITCH = True
+LINEAR_BIAS_SWITCH = False
+FLUC_COR_SWITCH = False
 
 class CloudDistribution(object):
 
@@ -193,7 +193,7 @@ class CloudDistribution(object):
         _, bad_indices = hempel.hempel_filter(self.dists[var], nMADM)
         self.outliers[var] = bad_indices
 
-    def remove_outliers(self, var, nMADM = 3):
+    def remove_outliers(self, var, nMADM = 4):
         '''Removes entries from all distributions for which the given
         variable is an outlier.'''
         if not self.does_var_exist(var):
@@ -301,6 +301,9 @@ class CloudDistribution(object):
 
     def snr(self, var):
         return self.signaltonoise(var)
+        
+    def allan_dev(self, var):
+        return self.calc_statistic(var, lambda x: math.sqrt(0.5*np.mean(np.diff(x)**2)))
 
     def calc_statistic(self, var, statistic):
         '''Returns the value of statistic for the given variable'''
@@ -333,8 +336,10 @@ class CloudDistribution(object):
             print 'Mean: %2.2e' % self.mean(var)
             print 'StdDev: %2.2e' % self.std(var)
             print 'SNR: %2.2f' % self.signaltonoise(var)
-            print 'sigma_SNR: %2.2f\n' % (math.sqrt((2 +
+            print 'sigma_SNR: %2.2f' % (math.sqrt((2 +
                     self.signaltonoise(var) ** 2) / len(self.dists[var])))
+            print 'Allan Deviation: %2.2e' % self.allan_dev(var)
+            print 'Allan SNR: %2.2f\n' %  (self.mean(var) / self.allan_dev(var))
         else:
             print 'Variable does not exist!'
 
