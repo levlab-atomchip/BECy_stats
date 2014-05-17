@@ -323,7 +323,8 @@ class CloudImage(object):
                                 fluc_cor_switch=False,
                                 linear_bias_switch=True,
                                 debug_flag=False,
-                                offset_switch=True):
+                                offset_switch=True,
+                                fit_axis=1):
         '''This calculates the common parameters extracted
         from a gaussian fit all at once, returning them in a dictionary.
         The parameters are: Atom Number, X position, Z position,
@@ -337,8 +338,10 @@ class CloudImage(object):
         try:
             if linear_bias_switch:
                 coefs_x = fit_gaussian_1d(imgcut_x)
+                slope_x = coefs_x[4]
             else:
                 coefs_x = fit_gaussian_1d_noline(imgcut_x)
+                slope_x = 0
         except:
             coefs_x = [0, 0, 0] # KLUDGE!!!
             print 'Fit Error in X'
@@ -346,17 +349,28 @@ class CloudImage(object):
         try:
             if linear_bias_switch:
                 coefs_z = fit_gaussian_1d(imgcut_z)
+                slope_z = coefs_z[4]
             else:
                 coefs_z = fit_gaussian_1d_noline(imgcut_z)
+                slope_z = 0
         except:
             print 'Fit Error in Z'
         
-        # Using z to get atom_number; need to add linear bias correction!
-
-        offset_z = coefs_z[3]
+        
+        # Using a switch to choose which axis gives offset;need to add linear bias correction!
+        if fit_axis==1:
+            offset = coefs_z[3]
+            slope = slope_z
+            axis_len = len(imgcut_z)
+        elif fit_axis==0:
+            offset = coefs_x[3]
+            slope = slope_x
+            axis_len = len(imgcut_x)
+            
         if offset_switch:
-            atom_number = self.A/self.s_lambda*(np.sum(od_image) -
-                                offset_z*len(imgcut_z))
+            atom_number = self.A/self.s_lambda*(np.sum(od_image) 
+                                - 0.5*slope*axis_len**2
+                                - offset*axis_len)
         else:
             atom_number = self.A/self.s_lambda*(np.sum(od_image))
 

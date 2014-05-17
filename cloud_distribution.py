@@ -4,6 +4,7 @@ Right now this can provide the functionality of:
 numberhist, posdist, widthdist, intensitydist, numpos,
     paramregress, pos_regress, posxvy, twoparamregress'''
 
+import csv
 import fittemp
 from numpy import array
 from scipy.cluster.vq import kmeans, vq
@@ -19,9 +20,9 @@ import hempel
 import win32gui
 from win32com.shell import shell, shellcon
 
-DEBUG_FLAG = False
+DEBUG_FLAG = True
 LINEAR_BIAS_SWITCH = False
-FLUC_COR_SWITCH = False
+FLUC_COR_SWITCH = True
 
 class CloudDistribution(object):
 
@@ -60,6 +61,12 @@ class CloudDistribution(object):
                                 'debug_flag': DEBUG_FLAG,
                                 'offset_switch': True}
         self.initialize_gaussian_params(**gaussian_fit_options)
+        
+        outputfile = self.directory + '\\numbers' + '.csv'
+        with open(outputfile, 'w') as f:
+            writer = csv.writer(f)
+            for filename, num in zip(self.filelist, self.dists['atom_number']):
+                writer.writerow([filename, num])
 
     def initialize_gaussian_params(self, **kwargs):
         '''Calculate the most commonly used parameters
