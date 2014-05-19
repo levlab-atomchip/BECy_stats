@@ -20,9 +20,11 @@ import hempel
 import win32gui
 from win32com.shell import shell, shellcon
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 LINEAR_BIAS_SWITCH = False
 FLUC_COR_SWITCH = True
+OFFSET_SWITCH = True
+FIT_AXIS = 0; # 0 is x, 1 is z
 
 class CloudDistribution(object):
 
@@ -59,7 +61,8 @@ class CloudDistribution(object):
         gaussian_fit_options = {'fluc_cor_switch': FLUC_COR_SWITCH,
                                 'linear_bias_switch': LINEAR_BIAS_SWITCH,
                                 'debug_flag': DEBUG_FLAG,
-                                'offset_switch': True}
+                                'offset_switch': OFFSET_SWITCH,
+                                'fit_axis': FIT_AXIS}
         self.initialize_gaussian_params(**gaussian_fit_options)
         
         outputfile = self.directory + '\\numbers' + '.csv'
