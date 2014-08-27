@@ -354,6 +354,7 @@ class CloudImage(object):
                 coefs_z = fit_gaussian_1d_noline(imgcut_z)
                 slope_z = 0
         except:
+            coefs_z = [0,0,0]
             print 'Fit Error in Z'
         
         

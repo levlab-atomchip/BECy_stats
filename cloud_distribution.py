@@ -8,6 +8,7 @@ import csv
 import fittemp
 from numpy import array
 from scipy.cluster.vq import kmeans, vq
+from scipy.optimize import curve_fit
 import cloud_image
 from cloud_image import FitError
 import numpy as np
@@ -16,15 +17,19 @@ import matplotlib.pyplot as plt
 from scipy import stats
 import math
 import hempel
+import pprint
 
 import win32gui
 from win32com.shell import shell, shellcon
 
-DEBUG_FLAG = False
+DEBUG_FLAG = True
 LINEAR_BIAS_SWITCH = False
-FLUC_COR_SWITCH = True
+FLUC_COR_SWITCH = False
 OFFSET_SWITCH = True
 FIT_AXIS = 0; # 0 is x, 1 is z
+
+def lifetime_func(x, a, b, c):
+    return a * np.exp(-b * x) + c
 
 class CloudDistribution(object):
 
@@ -55,15 +60,16 @@ class CloudDistribution(object):
         self.numimgs = len(self.filelist)
         self.dists = {}
         self.outliers = {}
+        self.cont_par_name = None
 
         # should always calculate simple dists from gaussians
         # to avoid repetitive calculations
-        gaussian_fit_options = {'fluc_cor_switch': FLUC_COR_SWITCH,
+        self.gaussian_fit_options = {'fluc_cor_switch': FLUC_COR_SWITCH,
                                 'linear_bias_switch': LINEAR_BIAS_SWITCH,
                                 'debug_flag': DEBUG_FLAG,
                                 'offset_switch': OFFSET_SWITCH,
                                 'fit_axis': FIT_AXIS}
-        self.initialize_gaussian_params(**gaussian_fit_options)
+        self.initialize_gaussian_params(**self.gaussian_fit_options)
         
         outputfile = self.directory + '\\numbers' + '.csv'
         with open(outputfile, 'w') as f:
@@ -114,7 +120,7 @@ class CloudDistribution(object):
 
     def control_param_dist(self):
         '''Creates a distribution for the control parameter'''
-        cont_par_name = None
+        self.cont_par_name = None
         index = 1
         cont_pars = []
         for this_file in self.filelist:
@@ -123,14 +129,15 @@ class CloudDistribution(object):
 
             this_img = cloud_image.CloudImage(this_file)
             this_img_cont_par_name = this_img.cont_par_name
-            if cont_par_name is None:
-                cont_par_name = this_img_cont_par_name
+            if self.cont_par_name is None:
+                self.cont_par_name = this_img_cont_par_name
             else:
-                if this_img_cont_par_name != cont_par_name:
+                if this_img_cont_par_name != self.cont_par_name:
                     print 'No single control parameter!'
+                    self.cont_par_name = None
                     raise Exception
             cont_pars.append(this_img.curr_cont_par)
-        self.dists[cont_par_name] = cont_pars
+        self.dists[self.cont_par_name] = cont_pars
 
     def temperature_groups(self):
         '''Creates a list of lists of images in the same temperature set'''
@@ -341,7 +348,9 @@ class CloudDistribution(object):
 
     def display_statistics(self, var, **kwargs):
         '''Display several commonly used statistics'''
+        #TODO: make this create a dictionary instead
         if self.does_var_exist(var, **kwargs):
+            print '\n'+self.directory
             print '\nStatistics of ' + var
             print 'Mean: %2.2e' % self.mean(var)
             print 'StdDev: %2.2e' % self.std(var)
@@ -350,6 +359,8 @@ class CloudDistribution(object):
                     self.signaltonoise(var) ** 2) / len(self.dists[var])))
             print 'Allan Deviation: %2.2e' % self.allan_dev(var)
             print 'Allan SNR: %2.2f\n' %  (self.mean(var) / self.allan_dev(var))
+            pp = pprint.PrettyPrinter(indent=4)
+            pp.pprint(self.gaussian_fit_options)
         else:
             print 'Variable does not exist!'
 
@@ -377,6 +388,26 @@ class CloudDistribution(object):
             slope * np.array(self.dists[var1]) + intercept)
         plt.xlabel(var1)
         plt.ylabel(var2)
+        plt.show()
+        
+    def lifetime(self):
+        '''Perform exponential regression to determine the lifetime'''
+        if self.cont_par_name not in self.dists.keys():
+            self.control_param_dist()
+        p0 = np.array([self.dists['atom_number'][0], 0.2, 0]) 
+        popt, pcov = curve_fit(lifetime_func, np.array(self.dists[self.cont_par_name]), np.array(self.dists['atom_number']), p0)
+        print '\nRegression of atom number against ' + self.cont_par_name
+        print 'Lifetime: %2.1f' % (1/popt[1])
+        print 'sigma: %2.1e' % np.sqrt(pcov[1][1])
+        plt.plot(self.dists[self.cont_par_name], self.dists['atom_number'], '.')
+        time_srtd = sorted(self.dists[self.cont_par_name])
+        time_array = np.linspace(time_srtd[0], time_srtd[-1], 100)
+        # num_srtd = [x for (y, x) in sorted(zip(self.dists[self.cont_par_name], self.dists['atom_number']))]
+        plt.plot(
+            time_array,
+            lifetime_func(np.array(time_array), *popt))
+        plt.xlabel(self.cont_par_name)
+        plt.ylabel('Atom Number')
         plt.show()
 
     def kmeans(self, var1, var2, num_clusters=2):
