@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import os
 from math import sqrt
+from scipy.ndimage import rotate
 
 
 DEBUG_FLAG = False
@@ -21,14 +22,14 @@ def find_nearest(array, value):
     idx = (np.abs(array-value)).argmin()
     return [array[idx], idx]
 
-def gaussian_1d(x, A, mu, sigma, offset, slope):
+def gaussian_1d(x, Asqrt, mu, sigma, offset, slope):
     '''fitting function for 1D gaussian plus offset and line'''
-    return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset + \
+    return Asqrt**2*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset + \
                                                     slope*np.array(x)
 
-def gaussian_1d_noline(x, A, mu, sigma, offset):
+def gaussian_1d_noline(x, Asqrt, mu, sigma, offset):
     '''fitting function for 1D gaussian plus offset'''
-    return A*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
+    return Asqrt**2*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
 
 def gaussian_2d(xdata,
                 A_x,
@@ -51,7 +52,7 @@ def fit_gaussian_1d(image):
     max_loc = np.argmax(image)
     [_, half_max_ind] = find_nearest(image, max_value/2.)
     hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
-    p_0 = [max_value, max_loc, hwhm, 0., 0.] #fit guess
+    p_0 = [np.sqrt(max_value), max_loc, hwhm, 0., 0.] #fit guess
     xdata = np.arange(np.size(image))
 
     coef, _ = curve_fit(gaussian_1d, xdata, image, p0=p_0)
@@ -64,7 +65,7 @@ def fit_gaussian_1d_noline(image):
     max_loc = np.argmax(image)
     [_, half_max_ind] = find_nearest(image, max_value/2.)
     hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
-    p_0 = [max_value, max_loc, hwhm, 0.] #fit guess
+    p_0 = [np.sqrt(max_value), max_loc, hwhm, 0.] #fit guess
     xdata = np.arange(np.size(image))
 
     coef, _ = curve_fit(gaussian_1d_noline, xdata, image, p0=p_0)
@@ -135,7 +136,12 @@ class CloudImage(object):
 
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
-
+        
+        if self.image_rotation != 0:
+            self.atom_image = rotate(self.atom_image, self.image_rotation)
+            self.light_image = rotate(self.light_image, self.image_rotation)
+            self.dark_image = rotate(self.dark_image, self.image_rotation)
+        
         self.atom_image_trunc = \
         self.atom_image[self.trunc_win_y[0]:self.trunc_win_y[-1],
                         self.trunc_win_x[0]:self.trunc_win_x[-1]]
@@ -397,7 +403,7 @@ class CloudImage(object):
             ax3 = fig.add_subplot(133)
             ax3.imshow(od_image)
             plt.show()
-            
+            print "Fitting window: (%d, %d) to (%d, %d)"%(self.trunc_win_x[0], self.trunc_win_y[0], self.trunc_win_x[-1], self.trunc_win_y[-1])
             print "Fluctuation window: (%d, %d) to (%d, %d)"%(self.fluc_win_x[0], self.fluc_win_y[0], self.fluc_win_x[-1], self.fluc_win_y[-1])
         return {'atom_number': atom_number,
                 'position_x':(self.distconv(coefs_x[1], axis=0)

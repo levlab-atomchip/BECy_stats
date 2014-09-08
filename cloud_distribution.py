@@ -22,17 +22,23 @@ import pprint
 import win32gui
 from win32com.shell import shell, shellcon
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 LINEAR_BIAS_SWITCH = False
-FLUC_COR_SWITCH = False
+FLUC_COR_SWITCH = True
 OFFSET_SWITCH = True
-FIT_AXIS = 0; # 0 is x, 1 is z
+FIT_AXIS = 1; # 0 is x, 1 is z
+CUSTOM_FIT_SWITCH = False
+
+custom_fit_window = [162,800,60,485]
 
 def lifetime_func(x, a, b, c):
     return a * np.exp(-b * x) + c
+    
+def freq_func(t, omega, amplitude, offset, phase):
+    return offset + amplitude*np.sin(omega*t + phase)
+            
 
 class CloudDistribution(object):
-
     '''class representing distributions of parameters over many images'''
 
     def __init__(self, directory=None):
@@ -111,6 +117,8 @@ class CloudDistribution(object):
 
     def get_gaussian_params(self, file, **kwargs):
         this_img = cloud_image.CloudImage(file)
+        if CUSTOM_FIT_SWITCH:
+            this_img.truncate_image(*custom_fit_window)
         gaussian_params = \
                     this_img.get_gaussian_fit_params(**kwargs)
         gaussian_params['timestamp'] = this_img.timestamp()
@@ -409,7 +417,29 @@ class CloudDistribution(object):
         plt.xlabel(self.cont_par_name)
         plt.ylabel('Atom Number')
         plt.show()
+    
+    def trap_freq(self):
+        '''Fit a position to a sine function to determine trap frequency'''
+        if self.cont_par_name not in self.dists.keys():
+            self.control_param_dist()
+        
+        times = np.array(self.dists[self.cont_par_name])
+        positions = np.array(self.dists['position_z'])
 
+        pguess = np.array([2*math.pi*5e2, 0, 0, 0])
+        popt, pcov = curve_fit(freq_func, times, positions, pguess)
+        
+        print '\nRegression of position against ' + self.cont_par_name
+        print("Frequency: %2.2f Hz"%(popt[0] / 2 / math.pi))
+        print("Sigma: %2.2f Hz"%math.sqrt(pcov[0][0]))
+
+        plt.plot(times, positions, '.')
+        time_axis = np.linspace(np.min(times), np.max(times))
+        plt.plot(time_axis, freq_func(time_axis, *popt))
+        plt.xlabel(self.cont_par_name)
+        plt.ylabel('Z Position')
+        plt.show()
+        
     def kmeans(self, var1, var2, num_clusters=2):
         '''Perform a common clustering algorithm'''
         if var1 not in self.dists.keys():
