@@ -331,6 +331,7 @@ class CloudImage(object):
                                 debug_flag=False,
                                 offset_switch=True,
                                 custom_fit_switch = False,
+                                use_first_window = False,
                                 fit_axis=1):
         '''This calculates the common parameters extracted
         from a gaussian fit all at once, returning them in a dictionary.

@@ -27,9 +27,10 @@ LINEAR_BIAS_SWITCH = False
 FLUC_COR_SWITCH = True
 OFFSET_SWITCH = True
 FIT_AXIS = 1; # 0 is x, 1 is z
-CUSTOM_FIT_SWITCH = True
+CUSTOM_FIT_SWITCH = False
+USE_FIRST_WINDOW = False
 
-custom_fit_window = [802,980,642,937]
+CUSTOM_FIT_WINDOW = [800,940,250,950]
 
 def lifetime_func(x, a, b, c):
     return a * np.exp(-b * x) + c
@@ -75,7 +76,8 @@ class CloudDistribution(object):
                                 'debug_flag': DEBUG_FLAG,
                                 'offset_switch': OFFSET_SWITCH,
                                 'fit_axis': FIT_AXIS,
-                                'custom_fit_switch': CUSTOM_FIT_SWITCH}
+                                'custom_fit_switch': CUSTOM_FIT_SWITCH,
+                                'use_first_window': USE_FIRST_WINDOW}
         self.initialize_gaussian_params(**self.gaussian_fit_options)
         
         outputfile = self.directory + '\\numbers' + '.csv'
@@ -98,6 +100,13 @@ class CloudDistribution(object):
 
         index = 1
         for this_file in self.filelist:
+            if USE_FIRST_WINDOW and index == 1:
+                first_img = cloud_image.CloudImage(this_file)
+                CUSTOM_FIT_WINDOW = [first_img.trunc_win_x[0],
+                                     first_img.trunc_win_x[-1],
+                                     first_img.trunc_win_y[0],
+                                     first_img.trunc_win_y[-1]]
+                
             print 'Processing File %d' % index
             index += 1
             try:
@@ -119,7 +128,7 @@ class CloudDistribution(object):
     def get_gaussian_params(self, file, **kwargs):
         this_img = cloud_image.CloudImage(file)
         if CUSTOM_FIT_SWITCH:
-            this_img.truncate_image(*custom_fit_window)
+            this_img.truncate_image(*CUSTOM_FIT_WINDOW)
         gaussian_params = \
                     this_img.get_gaussian_fit_params(**kwargs)
         gaussian_params['timestamp'] = this_img.timestamp()
@@ -466,14 +475,14 @@ class CloudDistribution(object):
     def get_average_image(self):
         firstimg = cloud_image.CloudImage(self.filelist[0])
         if CUSTOM_FIT_SWITCH:
-                firstimg.truncate_image(*custom_fit_window)
+                firstimg.truncate_image(*CUSTOM_FIT_WINDOW)
         avg_img = np.zeros(np.shape(firstimg.get_od_image()))
     
         for this_file in self.filelist:
             this_img = cloud_image.CloudImage(this_file)
             print this_img.filename
             if CUSTOM_FIT_SWITCH:
-                this_img.truncate_image(*custom_fit_window)
+                this_img.truncate_image(*CUSTOM_FIT_WINDOW)
             this_odimg = this_img.get_od_image()
             avg_img += this_odimg
         
