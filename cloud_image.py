@@ -330,6 +330,7 @@ class CloudImage(object):
                                 linear_bias_switch=True,
                                 debug_flag=False,
                                 offset_switch=True,
+                                custom_fit_switch = False,
                                 fit_axis=1):
         '''This calculates the common parameters extracted
         from a gaussian fit all at once, returning them in a dictionary.
@@ -366,8 +367,13 @@ class CloudImage(object):
         
         # Using a switch to choose which axis gives offset;need to add linear bias correction!
         if fit_axis==1:
-            offset = coefs_z[3]
-            slope = slope_z
+            try:
+                offset = coefs_z[3]
+                slope = slope_z
+            except IndexError, UnboundLocalError:
+                print 'there was a fit error'
+                offset = 0
+                slope = 0
             axis_len = len(imgcut_z)
         elif fit_axis==0:
             offset = coefs_x[3]
@@ -382,6 +388,9 @@ class CloudImage(object):
             atom_number = self.A/self.s_lambda*(np.sum(od_image))
 
         if debug_flag:
+            print self.filename
+            print 'M: %2.2f'%self.magnification
+            print 'Number: %2.2e'%atom_number
             full_od_img = self.get_od_image(fluc_cor_switch, trunc_switch=False)
             fig = plt.figure()
             ax1 = fig.add_subplot(131)
@@ -391,7 +400,10 @@ class CloudImage(object):
             if linear_bias_switch:
                 ax1.plot(gaussian_1d(*params))
             else:
-                ax1.plot(gaussian_1d_noline(*params))
+                try:
+                    ax1.plot(gaussian_1d_noline(*params))
+                except TypeError:
+                    print 'Fit error, you get no plot'
             ax2 = fig.add_subplot(132)
             ax2.imshow(full_od_img)
             roi_width = self.trunc_win_x[-1] - self.trunc_win_x[0]

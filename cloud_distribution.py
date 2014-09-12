@@ -27,9 +27,9 @@ LINEAR_BIAS_SWITCH = False
 FLUC_COR_SWITCH = True
 OFFSET_SWITCH = True
 FIT_AXIS = 1; # 0 is x, 1 is z
-CUSTOM_FIT_SWITCH = False
+CUSTOM_FIT_SWITCH = True
 
-custom_fit_window = [162,800,60,485]
+custom_fit_window = [802,980,642,937]
 
 def lifetime_func(x, a, b, c):
     return a * np.exp(-b * x) + c
@@ -74,7 +74,8 @@ class CloudDistribution(object):
                                 'linear_bias_switch': LINEAR_BIAS_SWITCH,
                                 'debug_flag': DEBUG_FLAG,
                                 'offset_switch': OFFSET_SWITCH,
-                                'fit_axis': FIT_AXIS}
+                                'fit_axis': FIT_AXIS,
+                                'custom_fit_switch': CUSTOM_FIT_SWITCH}
         self.initialize_gaussian_params(**self.gaussian_fit_options)
         
         outputfile = self.directory + '\\numbers' + '.csv'
@@ -464,11 +465,17 @@ class CloudDistribution(object):
         
     def get_average_image(self):
         firstimg = cloud_image.CloudImage(self.filelist[0])
+        if CUSTOM_FIT_SWITCH:
+                firstimg.truncate_image(*custom_fit_window)
         avg_img = np.zeros(np.shape(firstimg.get_od_image()))
     
         for this_file in self.filelist:
-            this_img = cloud_image.CloudImage(this_file).get_od_image()
-            avg_img += this_img
+            this_img = cloud_image.CloudImage(this_file)
+            print this_img.filename
+            if CUSTOM_FIT_SWITCH:
+                this_img.truncate_image(*custom_fit_window)
+            this_odimg = this_img.get_od_image()
+            avg_img += this_odimg
         
         avg_img = avg_img / len(self.filelist)
         self.avg_img = avg_img
