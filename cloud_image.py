@@ -30,6 +30,15 @@ def gaussian_1d(x, Asqrt, mu, sigma, offset, slope):
 def gaussian_1d_noline(x, Asqrt, mu, sigma, offset):
     '''fitting function for 1D gaussian plus offset'''
     return Asqrt**2*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
+    
+def bec_1d(x, maxsqrt, Bsqrt, center):
+    '''fitting function for a Thomas-Fermi BEC in a harmonic trap'''
+    # using sqrt of parameters to force positive values
+    return maxsqrt**2 - Bsqrt**2 * (x - center)**2
+    
+def bec_thermal_1d(x, Asqrt, mu, sigma, offset, slope, maxsqrt, Bsqrt):
+    '''Simultaneous fit of BEC and gaussian'''
+    return gaussian_1d(x, Asqrt, mu, sigma, offset, slope) + bec_1d(x, maxsqrt, Bsqrt, mu)
 
 def gaussian_2d(xdata,
                 A_x,
@@ -66,10 +75,47 @@ def fit_gaussian_1d_noline(image):
     [_, half_max_ind] = find_nearest(image, max_value/2.)
     hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
     p_0 = [np.sqrt(max_value), max_loc, hwhm, 0.] #fit guess
+    print p_0
     xdata = np.arange(np.size(image))
 
     coef, _ = curve_fit(gaussian_1d_noline, xdata, image, p0=p_0)
     return coef
+
+def fit_bec_thermal(image):
+    ''''Simultaneous fit to gaussian and BEC'''
+    max_value = image.max()
+    max_loc = np.argmax(image)
+    [_, half_max_ind] = find_nearest(image, max_value/2.)
+    hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
+    max_guess = np.sqrt(max_value)
+    p_0 = [0, max_loc, hwhm, 0, 0, max_guess, hwhm**-2] #fit guess
+    xdata = np.arange(np.size(image))
+
+    coef, _ = curve_fit(bec_thermal_1d, xdata, image, p0=p_0)
+    return coef
+    
+def fit_partial_bec(image):
+    '''fits a gaussian and TF profile to a 1D image by trying a gaussian, then fitting to the wings, and then fitting a TF profile to the remainder.'''
+    WING_DEF = 1 #sigma
+    gaussian_attempt = fit_gaussian_1d_noline(image)
+    center_attempt = gaussian_attempt[1]
+    width_attempt = gaussian_attempt[2]
+    xaxis = xrange(len(image))
+    x_wings = [x for x in xaxis if x < center_attempt - WING_DEF*width_attempt or x > center_attempt + WING_DEF*width_attempt]
+    x_cen = [x for x in xaxis if x not in x_wings]
+    y_wings = [yy[1] for yy in enumerate(image) if yy[0] in x_wings]
+    y_fit = np.array([yy[1] if yy[0] in x_wings else max(y_wings) for yy in enumerate(image) ])
+    gaussian_wings = fit_gaussian_1d_noline(y_fit)
+    gaussian_fit = gaussian_1d_noline(xaxis, *gaussian_wings)
+    nongaussian = image - gaussian_fit
+    nongaussian_cen = [yy[1] for yy in enumerate(nongaussian) if yy[0] in x_cen]
+    p0 = [np.sqrt(max(nongaussian)), 0.5*(max(x_cen) - min(x_cen)), gaussian_wings[1]]
+    bec_fit, _ = curve_fit(bec_1d, x_cen, nongaussian_cen, p0)
+    plt.plot(xaxis, image); 
+    plt.plot(xaxis, bec_1d(xaxis, *bec_fit)+gaussian_fit); 
+    plt.plot(xaxis, gaussian_fit); 
+    plt.ylim((0, 1.2*max(image))); plt.show()
+    return (gaussian_wings, bec_fit)
 
 def fit_gaussian_2d(image):
     '''fits a 2D Gaussian to a 2D Image'''
