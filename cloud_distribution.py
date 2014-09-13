@@ -27,8 +27,8 @@ LINEAR_BIAS_SWITCH = False
 FLUC_COR_SWITCH = True
 OFFSET_SWITCH = True
 FIT_AXIS = 1; # 0 is x, 1 is z
-CUSTOM_FIT_SWITCH = False
-USE_FIRST_WINDOW = False
+CUSTOM_FIT_SWITCH = True
+USE_FIRST_WINDOW = True
 
 CUSTOM_FIT_WINDOW = [800,940,250,950]
 
@@ -68,7 +68,9 @@ class CloudDistribution(object):
         self.dists = {}
         self.outliers = {}
         self.cont_par_name = None
-
+        
+        self.custom_fit_window = CUSTOM_FIT_WINDOW
+        
         # should always calculate simple dists from gaussians
         # to avoid repetitive calculations
         self.gaussian_fit_options = {'fluc_cor_switch': FLUC_COR_SWITCH,
@@ -102,7 +104,7 @@ class CloudDistribution(object):
         for this_file in self.filelist:
             if USE_FIRST_WINDOW and index == 1:
                 first_img = cloud_image.CloudImage(this_file)
-                CUSTOM_FIT_WINDOW = [first_img.trunc_win_x[0],
+                self.custom_fit_window = [first_img.trunc_win_x[0],
                                      first_img.trunc_win_x[-1],
                                      first_img.trunc_win_y[0],
                                      first_img.trunc_win_y[-1]]
@@ -128,7 +130,7 @@ class CloudDistribution(object):
     def get_gaussian_params(self, file, **kwargs):
         this_img = cloud_image.CloudImage(file)
         if CUSTOM_FIT_SWITCH:
-            this_img.truncate_image(*CUSTOM_FIT_WINDOW)
+            this_img.truncate_image(*self.custom_fit_window)
         gaussian_params = \
                     this_img.get_gaussian_fit_params(**kwargs)
         gaussian_params['timestamp'] = this_img.timestamp()
@@ -428,15 +430,19 @@ class CloudDistribution(object):
         plt.ylabel('Atom Number')
         plt.show()
     
-    def trap_freq(self):
+    def trap_freq(self, axis=1):
         '''Fit a position to a sine function to determine trap frequency'''
         if self.cont_par_name not in self.dists.keys():
             self.control_param_dist()
         
         times = np.array(self.dists[self.cont_par_name])
-        positions = np.array(self.dists['position_z'])
+        if axis == 0:
+            positions = np.array(self.dists['position_x'])
+            pguess = np.array([2*math.pi*30, 0, 0, 0])
+        else:
+            positions = np.array(self.dists['position_z'])
+            pguess = np.array([2*math.pi*5e2, 0, 0, 0])
 
-        pguess = np.array([2*math.pi*5e2, 0, 0, 0])
         popt, pcov = curve_fit(freq_func, times, positions, pguess)
         
         print '\nRegression of position against ' + self.cont_par_name
@@ -447,7 +453,10 @@ class CloudDistribution(object):
         time_axis = np.linspace(np.min(times), np.max(times))
         plt.plot(time_axis, freq_func(time_axis, *popt))
         plt.xlabel(self.cont_par_name)
-        plt.ylabel('Z Position')
+        if axis == 0:
+            plt.ylabel('X Position')
+        else:
+            plt.ylabel('Z Position')
         plt.show()
         
     def kmeans(self, var1, var2, num_clusters=2):
@@ -475,14 +484,14 @@ class CloudDistribution(object):
     def get_average_image(self):
         firstimg = cloud_image.CloudImage(self.filelist[0])
         if CUSTOM_FIT_SWITCH:
-                firstimg.truncate_image(*CUSTOM_FIT_WINDOW)
+                firstimg.truncate_image(*self.custom_fit_window)
         avg_img = np.zeros(np.shape(firstimg.get_od_image()))
     
         for this_file in self.filelist:
             this_img = cloud_image.CloudImage(this_file)
             print this_img.filename
             if CUSTOM_FIT_SWITCH:
-                this_img.truncate_image(*CUSTOM_FIT_WINDOW)
+                this_img.truncate_image(*self.custom_fit_window)
             this_odimg = this_img.get_od_image()
             avg_img += this_odimg
         
