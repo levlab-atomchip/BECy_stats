@@ -1,5 +1,8 @@
 from math import sqrt, exp, pi
 from scipy.optimize import curve_fit
+from scipy.stats import linregress
+import matplotlib.pyplot as plt
+import numpy as np
 
 AMU = 1.66e-27 # kg
 M = 87*AMU #Rubidium-87
@@ -19,5 +22,14 @@ def temperature(tofs, widths):
     '''Extract temperature of cloud from widths'''
     tofsqrd = [(t*1e-3)**2 for t in tofs]
     widthsqrd = [(w*1e-6)**2 for w in widths]
-    coefs, _ = curve_fit(temp_func, tofsqrd, widthsqrd)
-    return (coefs[1] * M / KB, coefs)
+    # p0 = [np.min(widthsqrd), 100e-9*KB/M]
+    slope, intercept, _, _, std_err = linregress(tofsqrd, widthsqrd)
+    coefs = (slope, intercept)
+    xaxis = np.linspace(0, np.max(tofs), 100)
+    
+    print '\n\tTemperature: %2.2f nK'%(coefs[0] * M * 1e9 / KB)
+    print '\tSigma: %2.2f nK'%(std_err * M * 1e9 / KB)
+    
+    plt.plot(tofs, widths, '.'); plt.plot(xaxis, np.sqrt(slope*(xaxis*1e3)**2 + intercept*1e12)); 
+    plt.xlabel('TOF / ms'); plt.ylabel('Sigma_x / um'); plt.title('Temperature Fit');plt.show()
+    return (coefs[0] * M / KB, coefs)

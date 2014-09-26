@@ -123,7 +123,7 @@ def fit_bec_thermal(image):
     
 def fit_partial_bec(image):
     '''fits a gaussian and TF profile to a 1D image by trying a gaussian, then fitting to the wings, and then fitting a TF profile to the remainder.'''
-    WING_DEF = 2 #sigma
+    WING_DEF = 1.5 #sigma
     gaussian_attempt = fit_gaussian_1d_noline(image)
     center_attempt = gaussian_attempt[1]
     width_attempt = gaussian_attempt[2]
@@ -131,7 +131,6 @@ def fit_partial_bec(image):
     x_wings = [x for x in xaxis if x < center_attempt - WING_DEF*width_attempt or x > center_attempt + WING_DEF*width_attempt]
     x_cen = [x for x in xaxis if x not in x_wings]
     y_wings = np.array([yy[1] for yy in enumerate(image) if yy[0] in x_wings])
-    # y_fit = np.array([yy[1] if yy[0] in x_wings else max(y_wings) for yy in enumerate(image) ])
     gaussian_wings = fit_gaussian_1d_noline_wings(y_wings, x_wings)
     gaussian_y = gaussian_1d_noline(xaxis, *gaussian_wings)
     nongaussian = image - gaussian_y
@@ -140,15 +139,20 @@ def fit_partial_bec(image):
     bec_fit, _ = curve_fit(bec_1d, x_cen, nongaussian_cen, p0)
     bec_y = bec_1d(xaxis, *bec_fit)
     bec_y = [b if b > 0 else 0 for b in bec_y]
-    # gaussian = image - bec_y
-    # gaussian_fit2 = fit_gaussian_1d_noline(gaussian)
-    # gaussian_y2 = gaussian_1d_noline(xaxis, *gaussian_fit2)
+    
+    bec_cen = bec_fit[2]
+    bec_hw = bec_fit[0] / bec_fit[1]
+    x_wings2 = [x for x in xaxis if x < bec_cen - bec_hw or x > bec_cen + bec_hw]
+    y_wings2 = np.array([yy[1] for yy in enumerate(image) if yy[0] in x_wings2])
+    gaussian_wings2 = fit_gaussian_1d_noline_wings(y_wings2, x_wings2)
+    gaussian_y2 = gaussian_1d_noline(xaxis, *gaussian_wings2)
+
     plt.plot(xaxis, image); 
-    plt.plot(xaxis, bec_y+gaussian_y); 
-    plt.plot(xaxis, gaussian_y); 
+    plt.plot(xaxis, bec_y+gaussian_y2); 
+    plt.plot(xaxis, gaussian_y2); 
     # plt.ylim((0, 1.2*max(image))); 
     plt.show()
-    return (gaussian_wings, bec_fit)
+    return (gaussian_wings2, bec_fit)
 
 def fit_gaussian_2d(image):
     '''fits a 2D Gaussian to a 2D Image'''
@@ -411,6 +415,7 @@ class CloudImage(object):
                                 offset_switch=True,
                                 custom_fit_switch = False,
                                 use_first_window = False,
+                                pixel_units = False,
                                 fit_axis=1):
         '''This calculates the common parameters extracted
         from a gaussian fit all at once, returning them in a dictionary.
@@ -474,9 +479,9 @@ class CloudImage(object):
             full_od_img = self.get_od_image(fluc_cor_switch, trunc_switch=False)
             fig = plt.figure()
             ax1 = fig.add_subplot(131)
-            ax1.plot(imgcut_x)
-            params = [range(len(imgcut_x))]
-            params.extend(coefs_x)
+            ax1.plot(imgcut_z)
+            params = [range(len(imgcut_z))]
+            params.extend(coefs_z)
             if linear_bias_switch:
                 ax1.plot(gaussian_1d(*params))
             else:
@@ -497,16 +502,28 @@ class CloudImage(object):
             plt.show()
             print "Fitting window: (%d, %d) to (%d, %d)"%(self.trunc_win_x[0], self.trunc_win_y[0], self.trunc_win_x[-1], self.trunc_win_y[-1])
             print "Fluctuation window: (%d, %d) to (%d, %d)"%(self.fluc_win_x[0], self.fluc_win_y[0], self.fluc_win_x[-1], self.fluc_win_y[-1])
-        return {'atom_number': atom_number,
-                'position_x':(self.distconv(coefs_x[1], axis=0)
+        if not pixel_units:
+            return {'atom_number': atom_number,
+                    'position_x':(self.distconv(coefs_x[1], axis=0)
+                                    if coefs_x[1] is not None else None),
+                    'position_z': (self.distconv(coefs_z[1], axis=1)
+                                    if coefs_z[1] is not None else None),
+                    'width_x':(coefs_x[2]*self.pixel_size*self.image_angle_corr
+                                            / self.magnification
+                                    if coefs_x[2] is not None else None),
+                    'width_z': (coefs_z[2]*self.pixel_size / self.magnification
+                                    if coefs_z[2] is not None else None),
+                    'light_counts': np.sum((self.light_image - self.dark_image)
+                                                    .astype(float)),
+                    'timestamp': self.timestamp}
+        else:
+            return {'atom_number': atom_number,
+                'position_x':(coefs_x[1]+self.trunc_win_x[0]
                                 if coefs_x[1] is not None else None),
-                'position_z': (self.distconv(coefs_z[1], axis=1)
+                'position_z': (coefs_z[1]
                                 if coefs_z[1] is not None else None),
-                'width_x':(coefs_x[2]*self.pixel_size*self.image_angle_corr
-                                        / self.magnification
-                                if coefs_x[2] is not None else None),
-                'width_z': (coefs_z[2]*self.pixel_size / self.magnification
-                                if coefs_z[2] is not None else None),
+                'width_x':(coefs_x[2] if coefs_x[2] is not None else None),
+                'width_z': (coefs_z[2] if coefs_z[2] is not None else None),
                 'light_counts': np.sum((self.light_image - self.dark_image)
                                                 .astype(float)),
                 'timestamp': self.timestamp}

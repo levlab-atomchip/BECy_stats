@@ -24,19 +24,30 @@ from win32com.shell import shell, shellcon
 
 DEBUG_FLAG = False
 LINEAR_BIAS_SWITCH = False
-FLUC_COR_SWITCH = True
+FLUC_COR_SWITCH = False
 OFFSET_SWITCH = True
 FIT_AXIS = 1; # 0 is x, 1 is z
 CUSTOM_FIT_SWITCH = True
 USE_FIRST_WINDOW = True
+PIXEL_UNITS = False
 
 CUSTOM_FIT_WINDOW = [800,940,250,950]
+CAMPIXSIZE = 3.75e-6 #m
+G = 9.8 #m/s^2
+M = 87*1.66e-27
+KB = 1.38e-23
+
+def temp_func(t, sigma_0, sigma_v):
+    return np.sqrt(sigma_0**2 + (sigma_v**2)*(t**2))
 
 def lifetime_func(x, a, b, c):
     return a * np.exp(-b * x) + c
     
 def freq_func(t, omega, amplitude, offset, phase):
     return offset + amplitude*np.sin(omega*t + phase)
+    
+def magnif_func(x, a, b, c):
+    return a*np.square(x) + b*x + c
             
 
 class CloudDistribution(object):
@@ -79,7 +90,8 @@ class CloudDistribution(object):
                                 'offset_switch': OFFSET_SWITCH,
                                 'fit_axis': FIT_AXIS,
                                 'custom_fit_switch': CUSTOM_FIT_SWITCH,
-                                'use_first_window': USE_FIRST_WINDOW}
+                                'use_first_window': USE_FIRST_WINDOW,
+                                'pixel_units': PIXEL_UNITS}
         self.initialize_gaussian_params(**self.gaussian_fit_options)
         
         outputfile = self.directory + '\\numbers' + '.csv'
@@ -438,10 +450,10 @@ class CloudDistribution(object):
         times = np.array(self.dists[self.cont_par_name])
         if axis == 0:
             positions = np.array(self.dists['position_x'])
-            pguess = np.array([2*math.pi*30, 0, 0, 0])
+            pguess = np.array([2*math.pi*10, np.max(positions), 0, 0])
         else:
             positions = np.array(self.dists['position_z'])
-            pguess = np.array([2*math.pi*5e2, 0, 0, 0])
+            pguess = np.array([2*math.pi*700, np.max(positions), 0, 0])
 
         popt, pcov = curve_fit(freq_func, times, positions, pguess)
         
@@ -458,6 +470,47 @@ class CloudDistribution(object):
         else:
             plt.ylabel('Z Position')
         plt.show()
+
+    def magnification(self):
+        T = np.array(self.dists['tof'])
+        Y = np.array(self.dists['position_z'])
+        Y = np.max(Y)-Y
+        p0 = np.array([G*3.0 / (2.0 * CAMPIXSIZE), 0, np.min(Y)])
+        popt, pcov = curve_fit(magnif_func, T, Y, p0)
+        M = 2*popt[0] * CAMPIXSIZE / G
+        sigma = 2*np.sqrt(pcov[0][0]) * CAMPIXSIZE / G
+        print "Magnification: %2.2f"%M
+        print "Sigma: %2.2f"%sigma
+        plt.plot(T, Y, '.')
+        xax = np.linspace(np.min(T), np.max(T))
+        plt.plot(xax, magnif_func(xax, *popt))
+        plt.xlabel('TOF / ms')
+        plt.ylabel('Height / px')
+        plt.title('Magnification Fit')
+        plt.show()
+        
+    def temperature(self, axis = 1):
+        T = np.array(self.dists['tof'])
+        if axis == 0:
+            S = np.array(self.dists['width_x'])
+        else:
+            S = np.array(self.dists['width_z'])
+        p0 = np.array([np.min(S), 0.002])
+        tempfit_params, covars = curve_fit(temp_func, T, S, p0)
+        sigma_v = tempfit_params[1]
+        temp = M * sigma_v**2 / KB
+        temp_var = 4.0 * M * temp * covars[1][1] / KB
+        print "Temperature: %2.2f nK"%(temp*1e9)
+        print "Sigma: %2.2f nK"%(np.sqrt(temp_var)*1e9)
+        plt.plot(T, S, '.')
+        xax = np.linspace(np.min(T), np.max(T))
+        plt.plot(xax, temp_func(xax, *tempfit_params))
+        plt.xlabel('TOF / ms')
+        plt.ylabel('Width / px')
+        plt.title('Temperature Fit')
+        plt.show()
+        
+
         
     def kmeans(self, var1, var2, num_clusters=2):
         '''Perform a common clustering algorithm'''
