@@ -304,7 +304,7 @@ class CloudImage(object):
         od_image[np.isinf(od_image)] = od_image[~np.isinf(od_image)].max()
         return od_image
         
-    def get_vert_image(self)
+    def get_vert_image(self):
         vert_image = self.atom_image + self.dark_image + self.light_image
         return vert_image
 
