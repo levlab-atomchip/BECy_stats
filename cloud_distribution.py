@@ -18,6 +18,7 @@ from scipy import stats
 import math
 import hempel
 import pprint
+import fit_double_gaussian as fdg
 
 import win32gui
 from win32com.shell import shell, shellcon
@@ -569,6 +570,22 @@ class CloudDistribution(object):
         self.snr_map = self.avg_img / self.std_img
         
         return self.snr_map
+    
+    def fit_double_gaussian(self, file):
+        data = np.sum(np.array(cloud_image.CloudImage(file).get_od_image()),1)
+        #start=time.time()
+        coef=fdg.fit_double_gaussian_1d(data)
+        #print (time.time()-start)
+
+        xdata = np.arange(np.size(data))
+
+        plt.plot(double_gaussian_1d(xdata,coef[0],coef[1],coef[2],coef[3],coef[4],coef[5],coef[6],coef[7]))
+        plt.plot(data)
+        print np.abs(coef[2]-coef[3])
+        print np.abs(coef[4]-coef[5])
+
+        plt.show()
+        
             
     
 

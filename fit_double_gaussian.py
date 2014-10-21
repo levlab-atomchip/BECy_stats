@@ -2,13 +2,12 @@ from scipy.optimize import curve_fit
 from scipy.signal import find_peaks_cwt
 import numpy as np
 import matplotlib.pyplot as plt
-import cloud_image as ci
-from scipy.cluster.vq import whiten, kmeans
+#import cloud_image as ci
 import time
 
 
-file=ci.CloudImage('2014-10-15_192154.mat')
-data=np.sum(np.array(file.get_od_image()),1)
+#file=ci.CloudImage('2014-10-15_192154.mat')
+#data=np.sum(np.array(file.get_od_image()),1)
 
 def find_nearest(array, value):
     '''return the index and value of the array element closest to value'''
@@ -46,14 +45,14 @@ def locate_max(data,n_peak=2,width=10):
 #print data[peakindx]
 #locate_max(data)
 #start=time.time()
-coef=fit_double_gaussian_1d(data)
+#coef=fit_double_gaussian_1d(data)
 #print (time.time()-start)
 
-xdata = np.arange(np.size(data))
+#xdata = np.arange(np.size(data))
 
-plt.plot(double_gaussian_1d(xdata,coef[0],coef[1],coef[2],coef[3],coef[4],coef[5],coef[6],coef[7]))
-plt.plot(data)
-print np.abs(coef[2]-coef[3])
-print np.abs(coef[4]-coef[5])
+#plt.plot(double_gaussian_1d(xdata,coef[0],coef[1],coef[2],coef[3],coef[4],coef[5],coef[6],coef[7]))
+#plt.plot(data)
+#print np.abs(coef[2]-coef[3])
+#print np.abs(coef[4]-coef[5])
 
-plt.show()
+#plt.show()
