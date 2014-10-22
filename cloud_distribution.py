@@ -31,6 +31,7 @@ FIT_AXIS = 1; # 0 is x, 1 is z
 CUSTOM_FIT_SWITCH = True
 USE_FIRST_WINDOW = True
 PIXEL_UNITS = False
+DOUBLE_GAUSSIAN=True
 
 CUSTOM_FIT_WINDOW = [800,940,250,950]
 CAMPIXSIZE = 3.75e-6 #m
@@ -112,6 +113,9 @@ class CloudDistribution(object):
         self.dists['light_counts'] = []
         self.dists['timestamp'] = []
         self.dists['tof'] = []
+        
+        if DOUBLE_GAUSSIAN:
+            self.dists['d_peaks']=[] #distance between the two gaussian peaks
 
         index = 1
         for this_file in self.filelist:
@@ -579,8 +583,8 @@ class CloudDistribution(object):
 
         xdata = np.arange(np.size(data))
 
-        plt.plot(double_gaussian_1d(xdata,coef[0],coef[1],coef[2],coef[3],coef[4],coef[5],coef[6],coef[7]))
-        plt.plot(data)
+        plt.plot(fdg.double_gaussian_1d(xdata,coef[0],coef[1],coef[2],coef[3],coef[4],coef[5],coef[6],coef[7]))
+        plt.scatter(xdata,data)
         print np.abs(coef[2]-coef[3])
         print np.abs(coef[4]-coef[5])
 
