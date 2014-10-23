@@ -29,11 +29,12 @@ FLUC_COR_SWITCH = False
 OFFSET_SWITCH = True
 FIT_AXIS = 1; # 0 is x, 1 is z
 CUSTOM_FIT_SWITCH = True
-USE_FIRST_WINDOW = True
+USE_FIRST_WINDOW = False
 PIXEL_UNITS = False
 DOUBLE_GAUSSIAN=True
+DEBUG_DOUBLE=True
 
-CUSTOM_FIT_WINDOW = [800,940,250,950]
+CUSTOM_FIT_WINDOW = [355,945,190,320]
 CAMPIXSIZE = 3.75e-6 #m
 G = 9.8 #m/s^2
 M = 87*1.66e-27
@@ -577,21 +578,25 @@ class CloudDistribution(object):
     
     def fit_double_gaussian(self, file):
         data = np.sum(np.array(cloud_image.CloudImage(file).get_od_image()),1)
-        #start=time.time()
         coef=fdg.fit_double_gaussian_1d(data)
-        #print (time.time()-start)
+        if DEBUG_DOUBLE:
 
-        xdata = np.arange(np.size(data))
+            xdata = np.arange(np.size(data))
+            plt.plot(fdg.double_gaussian_1d(xdata,*coef))
+            plt.plot(data)
+            print coef
 
-        plt.plot(fdg.double_gaussian_1d(xdata,coef[0],coef[1],coef[2],coef[3],coef[4],coef[5],coef[6],coef[7]))
-        plt.scatter(xdata,data)
-        print np.abs(coef[2]-coef[3])
-        print np.abs(coef[4]-coef[5])
-
-        plt.show()
-        
-            
+            plt.show()
+        return coef
     
+    def calc_peak_separation(self,file):
+        coef=self.fit_double_gaussian(file)
+        return np.abs(coef[2]-coef[3])
+            
+    def average_peak_separation(self,filelist):
+        for this_file in filelist:
+            self.dists["d_peaks"].append(self.calc_peak_separation(this_file))
+        return self.mean("d_peaks")
 
 CD = CloudDistribution
         
