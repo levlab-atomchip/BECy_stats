@@ -56,7 +56,7 @@ def magnif_func(x, a, b, c):
 class CloudDistribution(object):
     '''class representing distributions of parameters over many images'''
 
-    def __init__(self, directory=None):
+    def __init__(self, directory=None, INITIALIZE_GAUSSIAN_PARAMS=True):
 
         # Open a windows dialog box for selecting a folder
         if directory is None:
@@ -95,13 +95,14 @@ class CloudDistribution(object):
                                 'custom_fit_switch': CUSTOM_FIT_SWITCH,
                                 'use_first_window': USE_FIRST_WINDOW,
                                 'pixel_units': PIXEL_UNITS}
-        self.initialize_gaussian_params(**self.gaussian_fit_options)
+        if INITIALIZE_GAUSSIAN_PARAMS:
+            self.initialize_gaussian_params(**self.gaussian_fit_options)
         
-        outputfile = self.directory + '\\numbers' + '.csv'
-        with open(outputfile, 'w') as f:
-            writer = csv.writer(f)
-            for filename, num in zip(self.filelist, self.dists['atom_number']):
-                writer.writerow([filename, num])
+            # outputfile = self.directory + '\\numbers' + '.csv'
+            # with open(outputfile, 'w') as f:
+                # writer = csv.writer(f)
+                # for filename, num in zip(self.filelist, self.dists['atom_number']):
+                    # writer.writerow([filename, num])
 
     def initialize_gaussian_params(self, **kwargs):
         '''Calculate the most commonly used parameters
