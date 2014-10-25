@@ -18,6 +18,7 @@ from scipy import stats
 import math
 import hempel
 import pprint
+import fit_double_gaussian as fdg
 
 import win32gui
 from win32com.shell import shell, shellcon
@@ -28,10 +29,12 @@ FLUC_COR_SWITCH = False
 OFFSET_SWITCH = True
 FIT_AXIS = 1; # 0 is x, 1 is z
 CUSTOM_FIT_SWITCH = True
-USE_FIRST_WINDOW = True
+USE_FIRST_WINDOW = False
 PIXEL_UNITS = False
+DOUBLE_GAUSSIAN=True
+DEBUG_DOUBLE=False
 
-CUSTOM_FIT_WINDOW = [800,940,250,950]
+CUSTOM_FIT_WINDOW = [355,945,190,320]
 CAMPIXSIZE = 3.75e-6 #m
 G = 9.8 #m/s^2
 M = 87*1.66e-27
@@ -53,7 +56,7 @@ def magnif_func(x, a, b, c):
 class CloudDistribution(object):
     '''class representing distributions of parameters over many images'''
 
-    def __init__(self, directory=None):
+    def __init__(self, directory=None, INITIALIZE_GAUSSIAN_PARAMS=True):
 
         # Open a windows dialog box for selecting a folder
         if directory is None:
@@ -92,13 +95,14 @@ class CloudDistribution(object):
                                 'custom_fit_switch': CUSTOM_FIT_SWITCH,
                                 'use_first_window': USE_FIRST_WINDOW,
                                 'pixel_units': PIXEL_UNITS}
-        self.initialize_gaussian_params(**self.gaussian_fit_options)
+        if INITIALIZE_GAUSSIAN_PARAMS:
+            self.initialize_gaussian_params(**self.gaussian_fit_options)
         
-        outputfile = self.directory + '\\numbers' + '.csv'
-        with open(outputfile, 'w') as f:
-            writer = csv.writer(f)
-            for filename, num in zip(self.filelist, self.dists['atom_number']):
-                writer.writerow([filename, num])
+            # outputfile = self.directory + '\\numbers' + '.csv'
+            # with open(outputfile, 'w') as f:
+                # writer = csv.writer(f)
+                # for filename, num in zip(self.filelist, self.dists['atom_number']):
+                    # writer.writerow([filename, num])
 
     def initialize_gaussian_params(self, **kwargs):
         '''Calculate the most commonly used parameters
@@ -111,6 +115,13 @@ class CloudDistribution(object):
         self.dists['light_counts'] = []
         self.dists['timestamp'] = []
         self.dists['tof'] = []
+        
+        if DOUBLE_GAUSSIAN:
+            self.dists['d_peaks']=[] #distance between the two gaussian peaks
+            self.dists['position_1']=[]#position of first peak
+            self.dists['position_2']=[]#position of second peak
+            self.dists['sigma_1']=[]#width of first peak
+            self.dists['sigma_2']=[]#width of second peak
 
         index = 1
         for this_file in self.filelist:
@@ -569,8 +580,55 @@ class CloudDistribution(object):
         self.snr_map = self.avg_img / self.std_img
         
         return self.snr_map
-            
     
+    def fit_double_gaussian(self, file):
+        data = np.sum(np.array(cloud_image.CloudImage(file).get_od_image()),1)
+        coef=fdg.fit_double_gaussian_1d(data)
+        if DEBUG_DOUBLE:
+
+            xdata = np.arange(np.size(data))
+            plt.plot(fdg.double_gaussian_1d(xdata,*coef))
+            plt.plot(data)
+            print coef
+
+            plt.show()
+        return coef
+    
+    def get_double_gaussian_params(self,file):
+        coef=self.fit_double_gaussian(file)
+        double_gaussian_params=np.array(['d_peaks','position_1','position_2','sigma_1','sigma_2'])
+        for key in double_gaussian_params:
+            self.dists[key].append(self.calc_double_gaussian_params(coef,key))
+    
+    def calc_double_gaussian_params(self,coef,key):
+        try:
+            if key == 'd_peaks':
+                return np.abs(coef[2]-coef[3])
+            elif key == 'position_1':
+                return np.min(coef[2:4])
+            elif key == 'position_2':
+                return np.max(coef[2:4])
+            elif key == 'sigma_1':
+                return coef[4]
+            elif key == 'sigma_2':
+                return coef[5]
+            else:
+                print 'Incorrect key: parameter may not exist for fitting double gaussian.'
+        except FitError:
+            print 'There maybe a fit error for fitting double gaussian.'
+    
+    def initialize_double_gaussian(self,filelist):
+        for this_file in filelist:
+            self.get_double_gaussian_params(this_file)
+   
+    def calc_peak_separation(self,file):
+        coef=self.fit_double_gaussian(file)
+        return np.abs(coef[2]-coef[3])
+            
+    def average_peak_separation(self,filelist):
+        for this_file in filelist:
+            self.dists["d_peaks"].append(self.calc_peak_separation(this_file))
+        return self.mean("d_peaks")
 
 CD = CloudDistribution
         

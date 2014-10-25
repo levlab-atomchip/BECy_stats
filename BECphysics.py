@@ -7,12 +7,21 @@ import numpy as np
 AMU = 1.66e-27 # kg
 M = 87*AMU #Rubidium-87
 KB = 1.38e-23 # J/K
+HBAR = 1.05e-34 # J/sec
+MUB = 9.274e-24 # J/T, Bohr Magneton
+
+A = 5.6e-9 # m, Rb-87 scattering length
+G = 4*pi*HBAR**2*A / M # J*m^3, coupling constant
+MU_PRE = G*(15.0/pi)**(0.4) * (1.0 / 2**1.8) * (M/G)**0.6
 
 MYTEMP = 640e-9 #K
 MYFREQ = 2*pi*500 #Hz
 
+PIXELSIZE = 3.75e-6 #m
+
 def width(t, T = MYTEMP, omega = MYFREQ):
-    '''Width of a thermal gas at temperature T in a trap with frequency omega after time of flight t'''
+    '''Width of a thermal gas at temperature T in a trap with frequency omega 
+    after time of flight t'''
     return sqrt(((KB * T)/(M*omega**2))*(1 + omega**2 * t**2))
 
 def temp_func(tsqrd, w0sqrd, tempscld):
@@ -48,3 +57,35 @@ def damping(n0, T):
         return (3 *  pi**4.5 / 5) * (n0 * A**3)**0.5 * (T / Tstar)**4 * omega_q
     else:
         return 2.09 * (A / n0)**0.5 * (omega_q / lambda_T**2)
+    
+def line_density(column_density, pixel_size=PIXELSIZE):
+    '''Given a column density, return the integrated linear density for the 
+    long direction of the cloud'''
+    return np.sum(column_density, axis = 0) * pixel_size
+    
+def number_array(line_density, pixel_size=PIXELSIZE):
+    '''Given a line density, return an array with the number of atoms in each 
+    pixel'''
+    return line_density * pixel_size
+    
+def density_map(cds, xaxis, ylocs, pixel_size=PIXELSIZE):
+    '''Given a sequence of column densities (cds) with a given xaxis taken at 
+    different sample locations (ylocs) produce a map of the linear density'''
+    lds = [line_density(cd) for cd in cds]
+    # X, Y = np.meshgrid(xaxis, ylocs)
+    ldsarr = np.array(lds)
+    return ldsarr
+    
+def field_array(l_density, omega_rad, omega_long):
+    '''Given a linear atom density, produce a map of magnetic field'''
+    mu = chemical_potential(l_density, omega_rad, omega_long)
+    return (mu - HBAR*omega_rad * np.sqrt(1 + 4*A*l_density)) / MUB
+    
+def chemical_potential(line_density, omega_rad, omega_long):
+    '''Given a line density in a harmonic trap defined by omega_rad, 
+    omega_long, return the global chemical potential.
+    This is based on the Thomas-Fermi approximation and is intended for use in 
+    perturbed harmonic traps, which is an uncontrolled approximation...'''
+    num_array = number_array(line_density)
+    N_tot = np.sum(num_array)
+    return MU_PRE * (N_tot * omega_rad**2 * omega_long)**0.4
