@@ -20,16 +20,20 @@ def double_gaussian_1d(x, Asqrt1, Asqrt2, mu1, mu2, sigma1, sigma2, offset, slop
     Asqrt2**2*np.exp(-1.*(x-mu2)**2./(2.*sigma2**2.)) + \
     offset + slope*np.array(x)
     
-def fit_double_gaussian_1d(image):
+def fit_double_gaussian_1d(image,guess_coef=True,p_0=None):
     '''fit data to a bimodel gaussian'''
     #max_value = image.max()
     #max_loc = np.argmax(image)
     #[_, half_max_ind] = find_nearest(image, max_value/2.)
     #hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
     #print hwhm
-    peaks,max_loc=locate_max(image,2,10)#this step may break if 10 is not a good guess for width and it is a first pass
-    hwhm=0.5*np.abs(max_loc[0]-max_loc[-1])# this is basically half of the distance between the two peaks
-    p_0 = [np.sqrt(peaks[0]), np.sqrt(peaks[1]), max_loc[0], max_loc[-1],hwhm, hwhm, 0., 0.] #fit guess
+    if guess_coef:
+        peaks,max_loc=locate_max(image)#this step may break if 10 is not a good guess for width and it is a first pass
+        hwhm=0.5*np.abs(max_loc[0]-max_loc[-1])# this is basically half of the distance between the two peaks
+        p_0 = [np.sqrt(peaks[0]), np.sqrt(peaks[1]), max_loc[0], max_loc[-1],hwhm, hwhm, 0., 0.] #fit guess
+    #else:
+        #manually enter guesses
+        #p_0=[17.,15.,75.,86.,3,3,41,-0.1]
     xdata = np.arange(np.size(image))
 
     coef, _ = curve_fit(double_gaussian_1d, xdata, image, p0=p_0)
@@ -37,10 +41,10 @@ def fit_double_gaussian_1d(image):
 
 def locate_max(data,n_peak=2,width=10):
     '''find the location and values of n_peak local maxima, currently only works for n_peaks=2'''   
-    peakindx=find_peaks_cwt(data,np.arange(1,width),noise_perc=80)
+    peakindx=find_peaks_cwt(data,np.arange(1,width))
     sd=sorted(data[peakindx])
     indx=np.argwhere(data>=sd[-n_peak])
-    print sd[-n_peak:], indx
+    #print sd[-n_peak:], indx
     return sd[-n_peak:], indx
 
 def peak_separation(coef):

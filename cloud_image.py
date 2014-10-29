@@ -122,7 +122,9 @@ def fit_bec_thermal(image):
     return coef
     
 def fit_partial_bec(image):
-    '''fits a gaussian and TF profile to a 1D image by trying a gaussian, then fitting to the wings, and then fitting a TF profile to the remainder.'''
+    '''fits a gaussian and TF profile to a 1D image by trying a gaussian, 
+    then fitting to the wings, and then fitting a TF profile to the remainder.
+    It's as bad as it sounds! I think a bayesian method would be better...'''
     WING_DEF = 1.5 #sigma
     gaussian_attempt = fit_gaussian_1d_noline(image)
     center_attempt = gaussian_attempt[1]
@@ -305,6 +307,7 @@ class CloudImage(object):
         return od_image
         
     def get_vert_image(self):
+        '''return the sum of the three images, appropriate for persistent features, especially useful in vertical imaging to see the sample'''
         vert_image = self.atom_image + self.dark_image + self.light_image
         return vert_image
 
@@ -547,6 +550,7 @@ class CloudImage(object):
                         * self.pixel_size) / self.magnification
 
     def lengthconv(self, length, axis):
+        '''Convert length in pixels to physical length'''
         if axis == 0:
             return ((length * self.pixel_size
                 * self.image_angle_corr) / self.magnification)

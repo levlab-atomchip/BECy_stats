@@ -8,7 +8,7 @@ rho0 = 2e-6
 z0 = 2e-6
 
 # dnoise = CD(r'C:\Users\Levlab\Documents\becy_stats_data\dragonfly_noise\2014-10-16\small_sample')
-dnoise = CD(r'C:\Users\Levlab\Documents\becy_stats_data\dragonfly_noise\2014-10-16')
+dnoise = CD(r'Z:\Data\ACM Data\dragonfly_noise\2014-10-20')
 
 
 cts_per_px = []
@@ -17,7 +17,7 @@ dn_per_px = []
 
 for imgfile in dnoise.filelist:
     img = ci(imgfile)
-    img.truncate_image(600, 1000, 500, 600)
+    # img.truncate_image(600, 1000, 500, 600)
     odimg = img.get_od_image()
     # light_noise = img.atom_image_trunc - img.light_image_trunc*img.fluc_cor
     light_noise = img.atom_image_trunc - img.light_image_trunc

@@ -1,8 +1,7 @@
-'''This is a class definition for getting distributional
-    information over a set of cloud images
-Right now this can provide the functionality of:
-numberhist, posdist, widthdist, intensitydist, numpos,
-    paramregress, pos_regress, posxvy, twoparamregress'''
+'''Cloud Distributions
+
+This is a class definition for getting distributional
+information over a set of cloud images in a single directory.'''
 
 import csv
 import fittemp
@@ -23,33 +22,38 @@ import fit_double_gaussian as fdg
 import win32gui
 from win32com.shell import shell, shellcon
 
-DEBUG_FLAG = False
-LINEAR_BIAS_SWITCH = False
-FLUC_COR_SWITCH = False
-OFFSET_SWITCH = True
-FIT_AXIS = 1; # 0 is x, 1 is z
-CUSTOM_FIT_SWITCH = True
-USE_FIRST_WINDOW = False
-PIXEL_UNITS = False
-DOUBLE_GAUSSIAN=True
-DEBUG_DOUBLE=False
+# Flags for setting module behavior
+DEBUG_FLAG = False                  #Debug mode; shows each fit
+LINEAR_BIAS_SWITCH = False          #Use linear bias in gaussian fits
+FLUC_COR_SWITCH = False             #Use fluctuation correction
+OFFSET_SWITCH = True                #Use fit to offset densities for number calculation
+FIT_AXIS = 1;                       #0 is x, 1 is z      
+CUSTOM_FIT_SWITCH = True            #Use CUSTOM_FIT_WINDOW
+USE_FIRST_WINDOW = False            #Use the fit window from the first image for all images
+PIXEL_UNITS = False                 #Return lengths and positions in pixels
+DOUBLE_GAUSSIAN=True                #Fit a double gaussian
+DEBUG_DOUBLE=False                  #Debug mode for double gaussian fits
 
-CUSTOM_FIT_WINDOW = [355,945,190,320]
-CAMPIXSIZE = 3.75e-6 #m
-G = 9.8 #m/s^2
-M = 87*1.66e-27
-KB = 1.38e-23
+CUSTOM_FIT_WINDOW = [355,945,190,320]   #x0, x1, y0, y1
+CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
+G = 9.8 #m/s^2, gravitational acceleration
+M = 87*1.66e-27 #kg, Rb 87 mass
+KB = 1.38e-23 #J/K, Boltzmann constant
 
 def temp_func(t, sigma_0, sigma_v):
+    '''fitting function for temperature measurement'''
     return np.sqrt(sigma_0**2 + (sigma_v**2)*(t**2))
 
-def lifetime_func(x, a, b, c):
-    return a * np.exp(-b * x) + c
+def lifetime_func(t, N0, decay_rate, offset):
+    '''fitting function for lifetime measurement'''
+    return N0 * np.exp(-decay_rate * t) + offset
     
 def freq_func(t, omega, amplitude, offset, phase):
+    '''fitting function for trap frequency measurement'''
     return offset + amplitude*np.sin(omega*t + phase)
     
 def magnif_func(x, a, b, c):
+    '''fitting function for magnification measurement'''
     return a*np.square(x) + b*x + c
             
 
@@ -77,6 +81,7 @@ class CloudDistribution(object):
 
         print self.directory
 
+        # Find all .mat files
         self.filelist = glob.glob(self.directory + '\\*.mat')
         self.numimgs = len(self.filelist)
         self.dists = {}
@@ -124,6 +129,9 @@ class CloudDistribution(object):
             self.dists['sigma_2']=[]#width of second peak
 
         index = 1
+        if DOUBLE_GAUSSIAN:
+            #p_0=fdg.fit_double_gaussian_1d(self.filelist[0],True)
+            p_0=[200.,250.,47.,90.,3,3,50,-0.1]
         for this_file in self.filelist:
             if USE_FIRST_WINDOW and index == 1:
                 first_img = cloud_image.CloudImage(this_file)
@@ -134,23 +142,30 @@ class CloudDistribution(object):
                 
             print 'Processing File %d' % index
             index += 1
-            try:
-                this_img_gaussian_params = \
-                            self.get_gaussian_params(this_file, **kwargs)
+            if not DOUBLE_GAUSSIAN:
+                try:
+                    this_img_gaussian_params = \
+                                self.get_gaussian_params(this_file, **kwargs)
 
-                for key in this_img_gaussian_params.keys():
-                    try:
-                        self.dists[key].append(this_img_gaussian_params[key])
-                    except AttributeError:
-                        print '''Invalid Method Name %s;
-                        CloudDistribution and CloudImage are out of sync!'''%key
-                        raise AttributeError
-                    # relies on same names in this and CloudImage.py!!
+                    for key in this_img_gaussian_params.keys():
+                        try:
+                            self.dists[key].append(this_img_gaussian_params[key])
+                        except AttributeError:
+                            print '''Invalid Method Name %s;
+                            CloudDistribution and CloudImage are out of sync!'''%key
+                            raise AttributeError
+                        # relies on same names in this and CloudImage.py!!
 
-            except FitError:
-                print 'Fit Error'
+                except FitError:
+                    print 'Fit Error'
+            else:
+                #fit data to double gaussians
+                print "Processing " + this_file
+                self.get_double_gaussian_params(this_file,p_0)
+                
 
     def get_gaussian_params(self, file, **kwargs):
+        '''return cloud parameters extracted from gaussian fits'''
         this_img = cloud_image.CloudImage(file)
         if CUSTOM_FIT_SWITCH:
             this_img.truncate_image(*self.custom_fit_window)
@@ -162,7 +177,7 @@ class CloudDistribution(object):
 
 
     def control_param_dist(self):
-        '''Creates a distribution for the control parameter'''
+        '''Create a distribution for the control parameter'''
         self.cont_par_name = None
         index = 1
         cont_pars = []
@@ -183,7 +198,7 @@ class CloudDistribution(object):
         self.dists[self.cont_par_name] = cont_pars
 
     def temperature_groups(self):
-        '''Creates a list of lists of images in the same temperature set'''
+        '''Create a list of lists of images in the same temperature set'''
         # This method assumes without warrant that the images are sorted
         # by timestamp in each distribution. Does that make me a bad person?
         tempseq = []
@@ -201,7 +216,7 @@ class CloudDistribution(object):
         self.dists['temperature_groups'] = seqs
 
     def temp_dist(self):
-        '''Calculates temperatures, given temperature groups'''
+        '''Calculate temperatures, given temperature groups'''
         # code for checking that temp groups exists needed
         self.temperature_groups()
         temp_x = []
@@ -221,7 +236,7 @@ class CloudDistribution(object):
 
 
     def values(self, var, **kwargs):
-        '''Creates a distribution for variable var, either
+        '''Create a distribution for variable var, either
         from the variables file or by calling a CloudImage method'''
         var_dist = []
         index = 1
@@ -248,13 +263,13 @@ class CloudDistribution(object):
         self.dists[var] = var_dist
 
     def find_outliers(self, var, nMADM):
-        '''Adds an entry to the outliers dictionary for the given variable,
+        '''Add an entry to the outliers dictionary for the given variable,
         of the form {var : [list of outlier indices]}'''
         _, bad_indices = hempel.hempel_filter(self.dists[var], nMADM)
         self.outliers[var] = bad_indices
 
     def remove_outliers(self, var, nMADM = 4):
-        '''Removes entries from all distributions for which the given
+        '''Remove entries from all distributions for which the given
         variable is an outlier.'''
         if not self.does_var_exist(var):
             print '%s does not exist!'%var
@@ -268,8 +283,8 @@ class CloudDistribution(object):
             self.dists[variable] = temp_dist
 
     def does_var_exist(self, var, **kwargs):
-        '''Checks to see if the variable has a distribution defined.
-        If not, attempts to make one.'''
+        '''Check to see if the variable has a distribution defined.
+        If not, attempt to make one.'''
         if var in self.dists.keys():
             return True
         else:
@@ -281,8 +296,8 @@ class CloudDistribution(object):
             return True
 
     def plot_distribution(self, var, **kwargs):
-        '''Plots a histogram and time series of a distribution'''
-        # numbins = np.ceil(np.power(self.numimgs,0.33))
+        '''Plot a histogram and time series of a distribution'''
+        # numbins = np.ceil(np.power(self.numimgs,0.33)) #This is recommended in the statistics literature but proves unsatisfying
         numbins = 20
         if self.does_var_exist(var, **kwargs):
             plt.subplot(121)
@@ -377,8 +392,8 @@ class CloudDistribution(object):
         return self.calc_statistic(var, statistic)
 
     def does_var_exist(self, var, **kwargs):
-        '''Checks to see if the variable has a distribution defined.
-        If not, attempts to make one.'''
+        '''Check to see if the variable has a distribution defined.
+        If not, attempt to make one.'''
         if var in self.dists.keys():
             return True
         else:
@@ -408,6 +423,7 @@ class CloudDistribution(object):
             print 'Variable does not exist!'
 
     def dispstat(self, var, **kwargs):
+        '''alias for display_statistics'''
         return self.display_statistics(var, **kwargs)
 
     def regression(self, var1, var2):
@@ -483,6 +499,7 @@ class CloudDistribution(object):
         plt.show()
 
     def magnification(self):
+        '''Extract magnification by fitting to a parabola'''
         T = np.array(self.dists['tof'])
         Y = np.array(self.dists['position_z'])
         Y = np.max(Y)-Y
@@ -501,6 +518,7 @@ class CloudDistribution(object):
         plt.show()
         
     def temperature(self, axis = 1):
+        '''Extract temperature'''
         T = np.array(self.dists['tof'])
         if axis == 0:
             S = np.array(self.dists['width_x'])
@@ -546,6 +564,7 @@ class CloudDistribution(object):
         plt.show()
         
     def get_average_image(self):
+        '''Return the average of all odimages in a distribution'''
         firstimg = cloud_image.CloudImage(self.filelist[0])
         if CUSTOM_FIT_SWITCH:
                 firstimg.truncate_image(*self.custom_fit_window)
@@ -565,6 +584,7 @@ class CloudDistribution(object):
         return avg_img
         
     def get_snr_map(self):
+        '''return a map of SNR of density at each pixel'''
         if not hasattr(self, 'avg_img'):
             self.get_average_image()
         var_img = np.zeros(np.shape(self.avg_img))
@@ -581,54 +601,56 @@ class CloudDistribution(object):
         
         return self.snr_map
     
-    def fit_double_gaussian(self, file):
+    def fit_double_gaussian(self, file, p_0_guess = None):
+        '''fits one data file to a double-gaussian'''
         data = np.sum(np.array(cloud_image.CloudImage(file).get_od_image()),1)
-        coef=fdg.fit_double_gaussian_1d(data)
-        if DEBUG_DOUBLE:
+        try:
+            if p_0_guess == None:
+                coef=fdg.fit_double_gaussian_1d(data,True)
+            else:
+                coef=fdg.fit_double_gaussian_1d(data,False,p_0_guess)
+            if DEBUG_DOUBLE:
 
-            xdata = np.arange(np.size(data))
-            plt.plot(fdg.double_gaussian_1d(xdata,*coef))
-            plt.plot(data)
-            print coef
+                xdata = np.arange(np.size(data))
+                plt.plot(fdg.double_gaussian_1d(xdata,*coef))
+                plt.plot(data)
+                print coef
 
-            plt.show()
+                plt.show()
+        except FitError:
+            print 'There maybe a fit error for fitting double gaussian.'
+            
+        
         return coef
     
-    def get_double_gaussian_params(self,file):
-        coef=self.fit_double_gaussian(file)
+    def get_double_gaussian_params(self,file,p_0_guess=None):
+        '''get parameters and store them in the correct dictionaries'''
+        coef=self.fit_double_gaussian(file,p_0_guess)
         double_gaussian_params=np.array(['d_peaks','position_1','position_2','sigma_1','sigma_2'])
         for key in double_gaussian_params:
             self.dists[key].append(self.calc_double_gaussian_params(coef,key))
     
     def calc_double_gaussian_params(self,coef,key):
-        try:
-            if key == 'd_peaks':
-                return np.abs(coef[2]-coef[3])
-            elif key == 'position_1':
-                return np.min(coef[2:4])
-            elif key == 'position_2':
-                return np.max(coef[2:4])
-            elif key == 'sigma_1':
-                return coef[4]
-            elif key == 'sigma_2':
-                return coef[5]
-            else:
-                print 'Incorrect key: parameter may not exist for fitting double gaussian.'
-        except FitError:
-            print 'There maybe a fit error for fitting double gaussian.'
+        '''calculate the gaussian parameters from the fit coeficients'''
+        if key == 'd_peaks':
+            return np.abs(coef[2]-coef[3])
+        elif key == 'position_1':
+            return np.min(coef[2:4])
+        elif key == 'position_2':
+            return np.max(coef[2:4])
+        elif key == 'sigma_1':
+            return coef[4]
+        elif key == 'sigma_2':
+            return coef[5]
+        else:
+            print 'Incorrect key: parameter may not exist for fitting double gaussian.'
+        
     
-    def initialize_double_gaussian(self,filelist):
-        for this_file in filelist:
-            self.get_double_gaussian_params(this_file)
+    def initialize_double_gaussian(self,file):
+        '''called during initialize_gaussian_params if DOUBLE_GAUSSIAN = True'''
+        print "Processing " + file
+        self.get_double_gaussian_params(file)
    
-    def calc_peak_separation(self,file):
-        coef=self.fit_double_gaussian(file)
-        return np.abs(coef[2]-coef[3])
-            
-    def average_peak_separation(self,filelist):
-        for this_file in filelist:
-            self.dists["d_peaks"].append(self.calc_peak_separation(this_file))
-        return self.mean("d_peaks")
 
 CD = CloudDistribution
         
