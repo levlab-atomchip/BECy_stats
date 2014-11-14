@@ -28,10 +28,10 @@ LINEAR_BIAS_SWITCH = False          #Use linear bias in gaussian fits
 FLUC_COR_SWITCH = False             #Use fluctuation correction
 OFFSET_SWITCH = True                #Use fit to offset densities for number calculation
 FIT_AXIS = 1;                       #0 is x, 1 is z      
-CUSTOM_FIT_SWITCH = True            #Use CUSTOM_FIT_WINDOW
+CUSTOM_FIT_SWITCH = False            #Use CUSTOM_FIT_WINDOW
 USE_FIRST_WINDOW = False            #Use the fit window from the first image for all images
 PIXEL_UNITS = False                 #Return lengths and positions in pixels
-DOUBLE_GAUSSIAN=True                #Fit a double gaussian
+DOUBLE_GAUSSIAN=False                #Fit a double gaussian
 DEBUG_DOUBLE=False                  #Debug mode for double gaussian fits
 
 CUSTOM_FIT_WINDOW = [355,945,190,320]   #x0, x1, y0, y1
@@ -563,19 +563,19 @@ class CloudDistribution(object):
         plt.plot(centroids[:, 0], centroids[:, 1], 'sg', markersize=8)
         plt.show()
         
-    def get_average_image(self):
+    def get_average_image(self, **kwargs):
         '''Return the average of all odimages in a distribution'''
         firstimg = cloud_image.CloudImage(self.filelist[0])
         if CUSTOM_FIT_SWITCH:
                 firstimg.truncate_image(*self.custom_fit_window)
-        avg_img = np.zeros(np.shape(firstimg.get_od_image()))
+        avg_img = np.zeros(np.shape(firstimg.get_od_image(**kwargs)))
     
         for this_file in self.filelist:
             this_img = cloud_image.CloudImage(this_file)
             print this_img.filename
             if CUSTOM_FIT_SWITCH:
                 this_img.truncate_image(*self.custom_fit_window)
-            this_odimg = this_img.get_od_image()
+            this_odimg = this_img.get_od_image(**kwargs)
             avg_img += this_odimg
         
         avg_img = avg_img / len(self.filelist)

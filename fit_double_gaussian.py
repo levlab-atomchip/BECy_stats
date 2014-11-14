@@ -31,9 +31,9 @@ def fit_double_gaussian_1d(image,guess_coef=True,p_0=None):
         peaks,max_loc=locate_max(image)#this step may break if 10 is not a good guess for width and it is a first pass
         hwhm=0.5*np.abs(max_loc[0]-max_loc[-1])# this is basically half of the distance between the two peaks
         p_0 = [np.sqrt(peaks[0]), np.sqrt(peaks[1]), max_loc[0], max_loc[-1],hwhm, hwhm, 0., 0.] #fit guess
-    #else:
+    else:
         #manually enter guesses
-        #p_0=[17.,15.,75.,86.,3,3,41,-0.1]
+        p_0=[18.,20.,34.,74.,1.71,2.83,33.8,0.4]
     xdata = np.arange(np.size(image))
 
     coef, _ = curve_fit(double_gaussian_1d, xdata, image, p0=p_0)
