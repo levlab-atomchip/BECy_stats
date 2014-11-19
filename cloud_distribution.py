@@ -31,8 +31,8 @@ FIT_AXIS = 1;                       #0 is x, 1 is z
 CUSTOM_FIT_SWITCH = False            #Use CUSTOM_FIT_WINDOW
 USE_FIRST_WINDOW = False            #Use the fit window from the first image for all images
 PIXEL_UNITS = False                 #Return lengths and positions in pixels
-DOUBLE_GAUSSIAN=False                #Fit a double gaussian
-DEBUG_DOUBLE=False                  #Debug mode for double gaussian fits
+DOUBLE_GAUSSIAN=True                #Fit a double gaussian
+DEBUG_DOUBLE=True                  #Debug mode for double gaussian fits
 
 CUSTOM_FIT_WINDOW = [355,945,190,320]   #x0, x1, y0, y1
 CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
@@ -646,10 +646,10 @@ class CloudDistribution(object):
             print 'Incorrect key: parameter may not exist for fitting double gaussian.'
         
     
-    def initialize_double_gaussian(self,file):
+    '''def initialize_double_gaussian(self,file,p_0_guess=None):
         '''called during initialize_gaussian_params if DOUBLE_GAUSSIAN = True'''
         print "Processing " + file
-        self.get_double_gaussian_params(file)
+        self.get_double_gaussian_params(file,p_0_guess)'''
    
 
 CD = CloudDistribution
