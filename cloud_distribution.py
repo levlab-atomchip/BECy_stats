@@ -127,11 +127,12 @@ class CloudDistribution(object):
             self.dists['position_2']=[]#position of second peak
             self.dists['sigma_1']=[]#width of first peak
             self.dists['sigma_2']=[]#width of second peak
+            self.dists['sample_position']=[]#position of the samp, i.e. mid point of position_1 and position_2
 
         index = 1
         if DOUBLE_GAUSSIAN:
             #p_0=fdg.fit_double_gaussian_1d(self.filelist[0],True)
-            p_0=[200.,250.,47.,90.,3,3,50,-0.1]
+            p_0=[96.,88.,40.,84.,3.,3.,10.,0.1]
         for this_file in self.filelist:
             if USE_FIRST_WINDOW and index == 1:
                 first_img = cloud_image.CloudImage(this_file)
@@ -626,7 +627,7 @@ class CloudDistribution(object):
     def get_double_gaussian_params(self,file,p_0_guess=None):
         '''get parameters and store them in the correct dictionaries'''
         coef=self.fit_double_gaussian(file,p_0_guess)
-        double_gaussian_params=np.array(['d_peaks','position_1','position_2','sigma_1','sigma_2'])
+        double_gaussian_params=np.array(['d_peaks','position_1','position_2','sigma_1','sigma_2','sample_position'])
         for key in double_gaussian_params:
             self.dists[key].append(self.calc_double_gaussian_params(coef,key))
     
@@ -642,12 +643,14 @@ class CloudDistribution(object):
             return coef[4]
         elif key == 'sigma_2':
             return coef[5]
+        elif key == 'sample_position':
+            return (coef[2]+coef[3])/2.0
         else:
             print 'Incorrect key: parameter may not exist for fitting double gaussian.'
         
     
     '''def initialize_double_gaussian(self,file,p_0_guess=None):
-        '''called during initialize_gaussian_params if DOUBLE_GAUSSIAN = True'''
+        #called during initialize_gaussian_params if DOUBLE_GAUSSIAN = True
         print "Processing " + file
         self.get_double_gaussian_params(file,p_0_guess)'''
    
