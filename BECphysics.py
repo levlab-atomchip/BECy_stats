@@ -3,6 +3,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 import matplotlib.pyplot as plt
 import numpy as np
+from math import pi
 
 AMU = 1.66e-27 # kg
 M = 87*AMU #Rubidium-87
@@ -76,7 +77,7 @@ def density_map(cds, xaxis, ylocs, pixel_size=PIXELSIZE):
     ldsarr = np.array(lds)
     return ldsarr
     
-def field_array(l_density, omega_rad, omega_long):
+def field_array(l_density, omega_rad=2*pi*1000, omega_long=2*pi*10):
     '''Given a linear atom density, produce a map of magnetic field'''
     mu = chemical_potential(l_density, omega_rad, omega_long)
     return (mu - HBAR*omega_rad * np.sqrt(1 + 4*A*l_density)) / MUB

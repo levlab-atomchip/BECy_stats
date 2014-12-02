@@ -20,8 +20,8 @@ import hempel
 import pprint
 import fit_double_gaussian as fdg
 
-import win32gui
-from win32com.shell import shell, shellcon
+#import win32gui
+#from win32com.shell import shell, shellcon
 
 DEBUG_FLAG = False
 LINEAR_BIAS_SWITCH = False
@@ -59,25 +59,25 @@ class CloudDistribution(object):
     def __init__(self, directory=None, INITIALIZE_GAUSSIAN_PARAMS=True):
 
         # Open a windows dialog box for selecting a folder
-        if directory is None:
-            desktop_pidl = shell.SHGetFolderLocation(0,
-                        shellcon.CSIDL_DESKTOP, 0, 0)
-            pidl, _, _ = shell.SHBrowseForFolder(
-                win32gui.GetDesktopWindow(),
-                desktop_pidl,
-                "Choose a folder",
-                0,
-                None,
-                None
-            )
-            self.directory = shell.SHGetPathFromIDList(pidl)
-
-        else:
-            self.directory = directory
+#if directory is None:
+#            desktop_pidl = shell.SHGetFolderLocation(0,
+#                        shellcon.CSIDL_DESKTOP, 0, 0)
+#            pidl, _, _ = shell.SHBrowseForFolder(
+#                win32gui.GetDesktopWindow(),
+#                desktop_pidl,
+#                "Choose a folder",
+#                0,
+#                None,
+#                None
+#            )
+#            self.directory = shell.SHGetPathFromIDList(pidl)
+#
+#        else:
+        self.directory = directory
 
         print self.directory
 
-        self.filelist = glob.glob(self.directory + '\\*.mat')
+        self.filelist = glob.glob(self.directory + '*.mat')
         self.numimgs = len(self.filelist)
         self.dists = {}
         self.outliers = {}
