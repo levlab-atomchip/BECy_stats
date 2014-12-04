@@ -30,9 +30,13 @@ OFFSET_SWITCH = True                #Use fit to offset densities for number calc
 FIT_AXIS = 1;                       #0 is x, 1 is z      
 CUSTOM_FIT_SWITCH = False            #Use CUSTOM_FIT_WINDOW
 USE_FIRST_WINDOW = False            #Use the fit window from the first image for all images
-PIXEL_UNITS = False                 #Return lengths and positions in pixels
-DOUBLE_GAUSSIAN=True               #Fit a double gaussian
-DEBUG_DOUBLE=False                 #Debug mode for double gaussian fits
+PIXEL_UNITS = False                  #Return lengths and positions in pixels
+DOUBLE_GAUSSIAN = False               #Fit a double gaussian
+DEBUG_DOUBLE = False                #Debug mode for double gaussian fits
+MAC_OS = False                     #for slight differences when running code in Mac OS
+OVERLAP = True                      #True if the data is actually two gaussians  overlapping and need to be fit to one gaussian
+if DOUBLE_GAUSSIAN:
+    OVERLAP = False         #always fit single gaussian if the two gaussians overlap
 
 CUSTOM_FIT_WINDOW = [355,945,190,320]   #x0, x1, y0, y1
 CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
@@ -82,7 +86,10 @@ class CloudDistribution(object):
         print self.directory
 
         # Find all .mat files
-        self.filelist = sorted(glob.glob(self.directory + '\\*.mat'))
+        if MAC_OS:
+            self.filelist = sorted(glob.glob(self.directory + '*.mat')) #just an OS directory difference
+        else:
+            self.filelist = sorted(glob.glob(self.directory + '*.\\mat'))
         self.numimgs = len(self.filelist)
         self.dists = {}
         self.outliers = {}
@@ -121,6 +128,10 @@ class CloudDistribution(object):
         self.dists['timestamp'] = []
         self.dists['tof'] = []
         
+        if OVERLAP:
+            self.dists['d_peaks']=[] #inferred distance between two gaussians that are overlapping
+            self.dists['h_from_sample']=[] #height of atoms from sample
+        
         if DOUBLE_GAUSSIAN:
             self.dists['d_peaks']=[] #distance between the two gaussian peaks
             self.dists['position_1']=[]#position of first peak
@@ -132,7 +143,7 @@ class CloudDistribution(object):
         index = 1
         if DOUBLE_GAUSSIAN:
             #p_0=fdg.fit_double_gaussian_1d(self.filelist[0],True)
-            p_0= [250.,250.,30.,45.,3.,3.,20.,0.1] # guess params for double gaussian fit in pixels or OD 
+            p_0= [117.,117.,37.,39.,3.,3.,20.,0.1] # guess params for double gaussian fit in pixels or OD 
             #[amplitude of 1st peak, amplitude of 2nd peak, position_1, position_2, sigma_1, sigma_2,offset,slope]
         for this_file in self.filelist:
             if USE_FIRST_WINDOW and index == 1:
@@ -160,10 +171,19 @@ class CloudDistribution(object):
 
                 except FitError:
                     print 'Fit Error'
+                
+                
+                        
             else:
                 #fit data to double gaussians
                 print "Processing " + this_file
                 self.get_double_gaussian_params(this_file,p_0)
+            
+        if OVERLAP:
+                sigma = 1.0*10**-6.0 #assuming the overlapping gaussians both have the same sigma of 1um
+                for i in self.dists['width_z']:
+                    self.dists['d_peaks'].append(2.0*(1/i*np.sqrt((i**4.0-sigma**4.0)/2.0)))
+                    self.dists['h_from_sample'].append(1/i*np.sqrt((i**4.0-sigma**4.0)/2.0))
                 
 
     def get_gaussian_params(self, file, **kwargs):
