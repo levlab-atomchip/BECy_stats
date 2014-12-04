@@ -6,8 +6,6 @@ import numpy as np
 from math import pi
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 
-dist = CD(r'/home/will/levlab/data/bfieldnoise_20141201/RRconfig/', False)
-offdist = CD(r'/home/will/levlab/data/bfieldnoise_20141201/off/', False)
 
 def field_dist(dist, UNBIAS=False, **kwargs):
     imgs = [ci(ff) for ff in dist.filelist]
@@ -38,9 +36,6 @@ def field_avg(dist, offdist, **kwargs):
     xaxis = np.cumsum(np.ones(len(fas[0])) * (13.0 / 21))
     return fa_tot, fa_noise, xaxis
 
-fa_tot, fa_noise, xaxis = field_avg(dist, offdist, UNBIAS=True)
-plt.plot(xaxis, fa_tot)
-plt.show()
 
 def field_noise(dist, offdist, **kwargs):
     fas = field_dist(dist, **kwargs)
@@ -54,11 +49,35 @@ def field_noise(dist, offdist, **kwargs):
     xaxis = np.cumsum(np.ones(len(fas[0])) * (13.0 / 21))
     return fa_noise, xaxis
 
-plt.plot(xaxis, fa_noise)
-plt.show()
 
-plt.errorbar(xaxis, fa_tot, fa_noise)
-plt.show()
+def ci_to_fa(image):
+    cdimg = image.get_od_image() / image.s_lambda
+    ldimg = bp.line_density(cdimg, PIXSIZE) 
+    faimg = bp.field_array(ldimg)
+    return faimg
+
+def main():
+
+    dist = CD(r'/home/will/levlab/data/bfieldnoise_20141201/RRconfig/', False)
+    offdist = CD(r'/home/will/levlab/data/bfieldnoise_20141201/off/', False)
+    fa_tot, fa_noise, xaxis = field_avg(dist, offdist, UNBIAS=False)
+    plt.plot(xaxis, fa_tot*1e9, '.')
+    plt.xlabel('X axis / um')
+    plt.ylabel('Field / nT')
+    plt.title('Averaged field measurement over 5 um wires')
+    plt.show()
+
+    plt.plot(xaxis, fa_noise*1e9, '.')
+    plt.xlabel('X axis / um')
+    plt.ylabel('Field noise / nT')
+    plt.title('Field Noise vs Position')
+    plt.show()
+
+    plt.errorbar(xaxis, fa_tot*1e9, fa_noise*1e9)
+    plt.xlabel('X axis / um')
+    plt.ylabel('Field / nT')
+    plt.title('Average field measurement over 5 um wires')
+    plt.show()
 
 #fas_unbias = [fa - np.mean(fa) for fa in fas]
 #fas_unbias_arr = np.array(fas_unbias)
@@ -73,3 +92,6 @@ plt.show()
 #for fa in fas:
 #    plt.plot(xaxis, fa)
 #plt.show()
+
+if __name__ == "__main__":
+    main()
