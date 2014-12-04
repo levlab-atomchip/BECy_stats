@@ -43,6 +43,7 @@ CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
 G = 9.8 #m/s^2, gravitational acceleration
 M = 87*1.66e-27 #kg, Rb 87 mass
 KB = 1.38e-23 #J/K, Boltzmann constant
+cloud_width = 1.0*10**-6.0 #used in OVERLAP, assuming the overlapping gaussians both have the same sigma of 1um
 
 def temp_func(t, sigma_0, sigma_v):
     '''fitting function for temperature measurement'''
@@ -180,10 +181,10 @@ class CloudDistribution(object):
                 self.get_double_gaussian_params(this_file,p_0)
             
         if OVERLAP:
-                sigma = 1.0*10**-6.0 #assuming the overlapping gaussians both have the same sigma of 1um
+                
                 for i in self.dists['width_z']:
-                    self.dists['d_peaks'].append(2.0*(1/i*np.sqrt((i**4.0-sigma**4.0)/2.0)))
-                    self.dists['h_from_sample'].append(1/i*np.sqrt((i**4.0-sigma**4.0)/2.0))
+                    self.dists['d_peaks'].append(2.0*(1/i*np.sqrt((i**4.0-cloud_width**4.0)/2.0)))
+                    self.dists['h_from_sample'].append(1/i*np.sqrt((i**4.0-cloud_width**4.0)/2.0))
                 
 
     def get_gaussian_params(self, file, **kwargs):
