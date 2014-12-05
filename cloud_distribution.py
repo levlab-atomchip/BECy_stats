@@ -18,6 +18,7 @@ import math
 import hempel
 import pprint
 import fit_double_gaussian as fdg
+import platform
 
 # import win32gui
 # from win32com.shell import shell, shellcon
@@ -33,7 +34,6 @@ USE_FIRST_WINDOW = False            #Use the fit window from the first image for
 PIXEL_UNITS = False                  #Return lengths and positions in pixels
 DOUBLE_GAUSSIAN = False               #Fit a double gaussian
 DEBUG_DOUBLE = False                #Debug mode for double gaussian fits
-MAC_OS = False                     #for slight differences when running code in Mac OS
 OVERLAP = True                      #True if the data is actually two gaussians  overlapping and need to be fit to one gaussian
 if DOUBLE_GAUSSIAN:
     OVERLAP = False         #always fit single gaussian if the two gaussians overlap
@@ -87,8 +87,9 @@ class CloudDistribution(object):
         print self.directory
 
         # Find all .mat files
-        if MAC_OS:
-            self.filelist = sorted(glob.glob(self.directory + '*.mat')) #just an OS directory difference
+        if platform.system()=='Darwin':
+            #this step checks if we are running in Mac OS and change the format of the directory
+            self.filelist = sorted(glob.glob(self.directory + '*.mat')) #just a MAC OS directory difference
         else:
             self.filelist = sorted(glob.glob(self.directory + '*.\\mat'))
         self.numimgs = len(self.filelist)
