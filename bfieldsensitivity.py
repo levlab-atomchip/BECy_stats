@@ -50,7 +50,7 @@ def field_noise(dist, offdist, **kwargs):
     return fa_noise, xaxis
 
 
-def ci_to_fa(image):
+def ci_to_fa(image, PIXSIZE=13.0/21.1):
     cdimg = image.get_od_image() / image.s_lambda
     ldimg = bp.line_density(cdimg, PIXSIZE) 
     faimg = bp.field_array(ldimg)

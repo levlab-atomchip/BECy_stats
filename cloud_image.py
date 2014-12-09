@@ -219,6 +219,8 @@ class CloudImage(object):
 
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
+	self.trunc_x_lim = (self.trunc_win_x[0], self.trunc_win_x[-1])
+	self.trunc_y_lim = (self.trunc_win_y[0], self.trunc_win_y[-1])
         
         if self.image_rotation != 0:
             self.atom_image = rotate(self.atom_image, self.image_rotation)
@@ -226,14 +228,14 @@ class CloudImage(object):
             self.dark_image = rotate(self.dark_image, self.image_rotation)
         
         self.atom_image_trunc = \
-        self.atom_image[self.trunc_win_y[0]:self.trunc_win_y[-1],
-                        self.trunc_win_x[0]:self.trunc_win_x[-1]]
+        self.atom_image[self.trunc_y_lim[0]:self.trunc_y_lim[1],
+                        self.trunc_x_lim[0]:self.trunc_x_lim[1]]
         self.light_image_trunc = \
-        self.light_image[self.trunc_win_y[0]:self.trunc_win_y[-1],
-                        self.trunc_win_x[0]:self.trunc_win_x[-1]]
+        self.light_image[self.trunc_y_lim[0]:self.trunc_y_lim[1],
+                        self.trunc_x_lim[0]:self.trunc_x_lim[1]]
         self.dark_image_trunc = \
-        self.dark_image[self.trunc_win_y[0]:self.trunc_win_y[-1],
-                        self.trunc_win_x[0]:self.trunc_win_x[-1]]
+        self.dark_image[self.trunc_y_lim[0]:self.trunc_y_lim[1],
+                        self.trunc_x_lim[0]:self.trunc_x_lim[1]]
 
         self.fluc_win_x = self.hfig_main.calculation.flucWinX
         self.fluc_win_y = self.hfig_main.calculation.flucWinY

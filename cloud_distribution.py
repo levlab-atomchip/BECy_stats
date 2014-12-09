@@ -28,13 +28,13 @@ LINEAR_BIAS_SWITCH = False
 FLUC_COR_SWITCH = False
 OFFSET_SWITCH = True
 FIT_AXIS = 1; # 0 is x, 1 is z
-CUSTOM_FIT_SWITCH = False
+CUSTOM_FIT_SWITCH = True
 USE_FIRST_WINDOW = False
 PIXEL_UNITS = False
-DOUBLE_GAUSSIAN=True
+DOUBLE_GAUSSIAN=False
 DEBUG_DOUBLE=False
 
-CUSTOM_FIT_WINDOW = [355,945,190,320]
+CUSTOM_FIT_WINDOW = [217,931,166,175]
 CAMPIXSIZE = 3.75e-6 #m
 G = 9.8 #m/s^2
 M = 87*1.66e-27
@@ -77,7 +77,7 @@ class CloudDistribution(object):
 
         print self.directory
 
-        self.filelist = glob.glob(self.directory + '*.mat')
+        self.filelist = sorted(glob.glob(self.directory + '*.mat'))
         self.numimgs = len(self.filelist)
         self.dists = {}
         self.outliers = {}
@@ -545,18 +545,18 @@ class CloudDistribution(object):
         plt.plot(centroids[:, 0], centroids[:, 1], 'sg', markersize=8)
         plt.show()
         
-    def get_average_image(self):
+    def get_average_image(self,**kwargs):
         firstimg = cloud_image.CloudImage(self.filelist[0])
         if CUSTOM_FIT_SWITCH:
                 firstimg.truncate_image(*self.custom_fit_window)
-        avg_img = np.zeros(np.shape(firstimg.get_od_image()))
+        avg_img = np.zeros(np.shape(firstimg.get_od_image(**kwargs)))
     
         for this_file in self.filelist:
             this_img = cloud_image.CloudImage(this_file)
             print this_img.filename
             if CUSTOM_FIT_SWITCH:
                 this_img.truncate_image(*self.custom_fit_window)
-            this_odimg = this_img.get_od_image()
+            this_odimg = this_img.get_od_image(**kwargs)
             avg_img += this_odimg
         
         avg_img = avg_img / len(self.filelist)
