@@ -74,6 +74,7 @@ class CloudDistribution(object):
 #
 #        else:
         self.directory = directory
+	self.INITIALIZE_GAUSSIAN_PARAMS = INITIALIZE_GAUSSIAN_PARAMS
 
         print self.directory
 
@@ -95,7 +96,8 @@ class CloudDistribution(object):
                                 'custom_fit_switch': CUSTOM_FIT_SWITCH,
                                 'use_first_window': USE_FIRST_WINDOW,
                                 'pixel_units': PIXEL_UNITS}
-        if INITIALIZE_GAUSSIAN_PARAMS:
+        if self.INITIALIZE_GAUSSIAN_PARAMS:
+	    print("Initializing Gaussian Parameters")
             self.initialize_gaussian_params(**self.gaussian_fit_options)
         
             # outputfile = self.directory + '\\numbers' + '.csv'
