@@ -61,12 +61,17 @@ def damping(n0, T):
     
 def line_density(column_density, pixel_size=PIXELSIZE):
     '''Given a column density, return the integrated linear density for the 
-    long direction of the cloud'''
+    long direction of the cloud
+    column_density - OD/cross-section
+    line_density - integrate column_density along z axis times pixels (3/m)
+    '''
     return np.sum(column_density, axis = 0) * pixel_size
     
 def number_array(line_density, pixel_size=PIXELSIZE):
     '''Given a line density, return an array with the number of atoms in each 
-    pixel'''
+    pixel
+    number_array - number per pixel after integrating along an axis
+    '''
     return line_density * pixel_size
     
 def density_map(cds, xaxis, ylocs, pixel_size=PIXELSIZE):
@@ -78,8 +83,11 @@ def density_map(cds, xaxis, ylocs, pixel_size=PIXELSIZE):
     return ldsarr
     
 def field_array(l_density, omega_rad=2*pi*1000, omega_long=2*pi*10):
-    '''Given a linear atom density, produce a map of magnetic field'''
-    mu = chemical_potential(l_density, omega_rad, omega_long)
+    '''Given a linear atom density, returns a 1D field profile, for producing a map of magnetic field
+    omega_rad - radial frequency in radian
+    omega_long - axial frequency in radian
+    '''
+    mu = chemical_potential(l_density, omega_rad, omega_long) #this is sketchy
     return (mu - HBAR*omega_rad * np.sqrt(1 + 4*A*l_density)) / MUB
     
 def chemical_potential(line_density, omega_rad, omega_long):

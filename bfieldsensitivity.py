@@ -70,7 +70,8 @@ def ci_to_fa(image, pixsize=DEFAULT_PIXSIZE):
     return faimg
 
 def main():
-
+    '''for debugging purpose
+    '''
     dist = CD(r'/home/will/levlab/data/bfieldnoise_20141201/RRconfig/', False)
     offdist = CD(r'/home/will/levlab/data/bfieldnoise_20141201/off/', False)
     fa_tot, fa_noise, xaxis = field_avg(dist, offdist, UNBIAS=False)
