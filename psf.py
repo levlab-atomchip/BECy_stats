@@ -14,7 +14,7 @@ import math
 #class AlignedCloudDistribution(cd.CD):
 #	'''Container for aligned cloud distribution'''
 
-DEFAULT_MAX_SHIFT = 6
+DEFAULT_MAX_SHIFT = 6 # unit is pixel
 DEFAULT_PIXSIZE = 13.0 / 24 #PIXIS
 
 def next_power_two(n):
@@ -60,6 +60,7 @@ def get_shift_stats(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
     plt.xlabel('Shifts / um')
     plt.ylabel('Counts')
     plt.title('Histogram of shifts over %d runs'%len(shifts))
+    plt.show()
 
 def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     aligned_lds, _ = np.array(align_lds(dist, **kwargs))
