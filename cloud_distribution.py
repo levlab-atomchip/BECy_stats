@@ -31,7 +31,7 @@ USE_FIRST_WINDOW = False            #Use the fit window from the first image for
 PIXEL_UNITS = False                  #Return lengths and positions in pixels
 DOUBLE_GAUSSIAN = False               #Fit a double gaussian
 DEBUG_DOUBLE = False                #Debug mode for double gaussian fits
-OVERLAP = True                      #True if the data is actually two gaussians  overlapping and need to be fit to one gaussian
+OVERLAP = False                      #True if the data is actually two gaussians  overlapping and need to be fit to one gaussian
 if DOUBLE_GAUSSIAN:
     OVERLAP = False         #always fit single gaussian if the two gaussians overlap
 
@@ -80,6 +80,7 @@ class CloudDistribution(object):
 
         # else:
         self.directory = directory
+        self.INITIALIZE_GAUSSIAN_PARAMS = INITIALIZE_GAUSSIAN_PARAMS
 
         print self.directory
 
