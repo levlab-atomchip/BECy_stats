@@ -21,7 +21,7 @@ def next_power_two(n):
     this_exp = int(math.log(n, 2))
     return 2**(this_exp + 1)
 
-def get_aligned_line_densities(dist, max_shift=DEFAULT_MAX_SHIFT):
+def get_aligned_line_densities(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
     '''Produce aligned line densities from a distribution.
         Args:
             dist: a CloudDistribution
@@ -30,7 +30,8 @@ def get_aligned_line_densities(dist, max_shift=DEFAULT_MAX_SHIFT):
     '''
     imgs = [ci(ff) for ff in dist.filelist]
     cdimgs = [im.get_od_image() / im.s_lambda for im in imgs]
-    ldimgs = [bp.line_density(cdim, PIXSIZE) for cdim in cdimgs]
+    ldimgs = [bp.line_density(cdim, pixsize) for cdim in cdimgs]
+    ldsnorm = [ld/np.sum(ld) for ld in ldimgs]
 
     aligned = []
     shifts = []
@@ -71,9 +72,12 @@ def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     psd_norm = psd_avg / sum(psd_avg)
     faxis = np.fft.fftshift(np.fft.fftfreq(window_size, pixsize))
 
-    plt.semilogy(faxis[window_size/2:]*1e-6, psd_norm[window_size/2:])
+    plt.plot(1.0/faxis[window_size/2:], psd_norm[window_size/2:])
     plt.xlabel('Wavenumber / um^-1')
     plt.title('Power Spectrum of Averaged Atom Profiles')
+    plt.xlim(0,2)
+    plt.ylim(0,1e-4)
+    plt.show()
 
 #aliases
 align_lds = get_aligned_line_densities
