@@ -72,11 +72,11 @@ def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     psd_norm = psd_avg / sum(psd_avg)
     faxis = np.fft.fftshift(np.fft.fftfreq(window_size, pixsize))
 
-    plt.plot(1.0/faxis[window_size/2:], psd_norm[window_size/2:])
-    plt.xlabel('Wavenumber / um^-1')
+    plt.plot(0.5/faxis[window_size/2:], psd_norm[window_size/2:])
+    plt.xlabel('Spatial resolution  (um)')
     plt.title('Power Spectrum of Averaged Atom Profiles')
-    plt.xlim(0,2)
-    plt.ylim(0,1e-4)
+    plt.xlim(0.2,2)
+    plt.ylim(0,0.5e-4)
     plt.show()
 
 #aliases
