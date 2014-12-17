@@ -14,7 +14,7 @@ import math
 #class AlignedCloudDistribution(cd.CD):
 #	'''Container for aligned cloud distribution'''
 
-DEFAULT_MAX_SHIFT = 6 # unit is pixel
+DEFAULT_MAX_SHIFT = 30 # unit is pixel
 DEFAULT_PIXSIZE = 13.0 / 24 #PIXIS
 
 def next_power_two(n):
@@ -63,6 +63,9 @@ def get_shift_stats(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
     plt.show()
 
 def get_ave_norm(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
+    '''returns the average of image in a distribution, normalized
+    dist - cloud_distribution object containing all the images
+    '''
     aligned_lds, _ = np.array(align_lds(dist, **kwargs))
     avg_ld = np.mean(aligned_lds, axis=0)
     avg_norm = avg_ld / np.sum(avg_ld)
@@ -78,25 +81,49 @@ def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     psd_norm = psd_avg / sum(psd_avg)
     faxis = np.fft.fftshift(np.fft.fftfreq(window_size, pixsize))
     
-    
     plt.plot(0.5/faxis[window_size/2:], psd_norm[window_size/2:])
     plt.xlabel('Spatial resolution  (um)')
     plt.title('Power Spectrum of Averaged Atom Profiles')
     plt.xlim(0.2,2)
-    plt.ylim(0,0.5e-4)
+    plt.ylim(0,0.15e-4)
     plt.show()
-
     
     
 def plt_ave_shifted_imag(dist,pixsize=DEFAULT_PIXSIZE, **kwargs):
     ave_norm=get_ave_norm(dist,pixsize)
     xrange=np.array(range(len(ave_norm)))*pixsize
+    
     plt.plot(xrange,ave_norm)
     
     plt.xlabel('Spatial distance (um)')
     plt.ylabel('Normalized OD')
     plt.show()
 
+def get_shifts(dist, ref_dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
+    '''try to return shifts between two distributions, not really working for now
+    '''
+    imgs = [ci(ff) for ff in dist.filelist]
+    cdimgs = [im.get_od_image() / im.s_lambda for im in imgs]
+    ldimgs = [bp.line_density(cdim, pixsize) for cdim in cdimgs]
+    ldsnorm = [ld/np.sum(ld) for ld in ldimgs]
+    ref_img = ci(ref_dist.filelist[-1])
+    
+    ref_cdimg = ref_img.get_od_image() / ref_img.s_lambda
+    ref_ldimg = bp.line_density(ref_cdimg, pixsize)
+    ref_ldnorm = ref_ldimg/np.sum(ref_ldimg)
+    
+    shifts = []
+    for nn, ld in enumerate(ldimgs):
+        shift = ia.optimal_shift(ref_ldnorm, ldsnorm[nn])
+        if abs(shift) > max_shift:
+            pass
+        else:
+            #aligned.append(np.roll(ld, -shift))
+            shifts.append(shift)
+    return shifts
+    
+    
+    
 #aliases
 align_lds = get_aligned_line_densities
 sh_stats = get_shift_stats

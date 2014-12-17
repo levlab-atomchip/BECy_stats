@@ -10,7 +10,7 @@ from cloud_image import CloudImage as ci
 import BECphysics as bp
 import bfieldsensitivity as bf
 
-def optimal_shift(img, ref_img, shift_range=range(-30,30)):
+def optimal_shift(img, ref_img, shift_range=range(-20,20)):
     '''returns the best number of pixels to shift img relative to ref_img so as to get fragmentation aligned
     img, ref_img - 1D arrays
     shift_range - range of shifts to try, unit is pixel 
