@@ -89,7 +89,7 @@ class CloudDistribution(object):
             #this step checks if we are running in Mac OS and change the format of the directory
             self.filelist = sorted(glob.glob(self.directory + '*.mat')) #just a MAC OS directory difference
         else:
-            self.filelist = sorted(glob.glob(self.directory + '*.\\mat'))
+            self.filelist = sorted(glob.glob(self.directory + '\\*.mat'))
         self.numimgs = len(self.filelist)
         self.dists = {}
         self.outliers = {}
