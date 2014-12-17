@@ -62,17 +62,23 @@ def get_shift_stats(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
     plt.title('Histogram of shifts over %d runs'%len(shifts))
     plt.show()
 
-def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
+def get_ave_norm(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     aligned_lds, _ = np.array(align_lds(dist, **kwargs))
     avg_ld = np.mean(aligned_lds, axis=0)
     avg_norm = avg_ld / np.sum(avg_ld)
+    
+    return avg_norm
+
+def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
+    avg_norm=get_ave_norm(dist)
     window_size = next_power_two(len(avg_norm))
     avg_fft = np.fft.fftshift(np.fft.fft(avg_norm, window_size))
 
     psd_avg = np.abs(avg_fft)**2
     psd_norm = psd_avg / sum(psd_avg)
     faxis = np.fft.fftshift(np.fft.fftfreq(window_size, pixsize))
-
+    
+    
     plt.plot(0.5/faxis[window_size/2:], psd_norm[window_size/2:])
     plt.xlabel('Spatial resolution  (um)')
     plt.title('Power Spectrum of Averaged Atom Profiles')
@@ -80,7 +86,19 @@ def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     plt.ylim(0,0.5e-4)
     plt.show()
 
+    
+    
+def plt_ave_shifted_imag(dist,pixsize=DEFAULT_PIXSIZE, **kwargs):
+    ave_norm=get_ave_norm(dist,pixsize)
+    xrange=np.array(range(len(ave_norm)))*pixsize
+    plt.plot(xrange,ave_norm)
+    
+    plt.xlabel('Spatial distance (um)')
+    plt.ylabel('Normalized OD')
+    plt.show()
+
 #aliases
 align_lds = get_aligned_line_densities
 sh_stats = get_shift_stats
 psd = get_power_spectral_density
+plt_ave_img=plt_ave_shifted_imag
