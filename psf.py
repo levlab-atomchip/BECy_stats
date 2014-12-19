@@ -22,6 +22,9 @@ def next_power_two(n):
     return 2**(this_exp + 1)
     
 def get_line_densities(dist,pixsize=DEFAULT_PIXSIZE):
+    '''returns the integrated line densities (lds) and the normalized lds
+    dist - a cloud distribution object
+    '''
     imgs = [ci(ff) for ff in dist.filelist]
     cdimgs = [im.get_od_image() / im.s_lambda for im in imgs]
     ldimgs = [bp.line_density(cdim, pixsize) for cdim in cdimgs]
@@ -30,6 +33,9 @@ def get_line_densities(dist,pixsize=DEFAULT_PIXSIZE):
     return ldsnorm,ldimgs
     
 def plt_line_densities(dist,pixsize=DEFAULT_PIXSIZE):
+    '''plots normalized lds
+    dist - a cloud distribution object
+    '''
     ldsnorm, _ = get_line_densities(dist,pixsize)
     for ld in ldsnorm:
         plt.plot(ld)
@@ -57,6 +63,10 @@ def get_aligned_line_densities(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAUL
     return aligned, shifts
 
 def get_shift_stats(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
+    '''computes the mean and the standard deviation of the shifts needed for aligning
+    runs in a data set. prints them. and then plots a histogram of the shifts in um
+    dist - a cloud distribution object
+    '''
     _, shifts = get_aligned_line_densities(dist, max_shift)
     shift_mean = np.mean(shifts)
     shift_mean_um = shift_mean * pixsize
@@ -69,7 +79,7 @@ def get_shift_stats(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
     plt.figure()
     plt.hist(np.array(shifts)*pixsize, 10)
     plt.xlim(-20,20)
-    plt.xlabel('Shifts / um')
+    plt.xlabel('Shifts (um)')
     plt.ylabel('Counts')
     plt.title('Histogram of shifts over %d runs'%len(shifts))
     #plt.show()
@@ -85,6 +95,9 @@ def get_ave_norm(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     return avg_norm
 
 def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
+    '''plots the power spectral density of the average ld of a set of runs
+    dist - a cloud distribution object
+    '''
     avg_norm=get_ave_norm(dist)
     window_size = next_power_two(len(avg_norm))
     avg_fft = np.fft.fftshift(np.fft.fft(avg_norm, window_size))
@@ -102,6 +115,9 @@ def get_power_spectral_density(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     
     
 def plt_ave_shifted_imag(dist,pixsize=DEFAULT_PIXSIZE, **kwargs):
+    '''plots the average of lds in a data set, after aligning them
+    dist - a cloud distribution object
+    '''
     ave_norm=get_ave_norm(dist,pixsize)
     xrange=np.array(range(len(ave_norm)))*pixsize
     
