@@ -20,6 +20,21 @@ DEFAULT_PIXSIZE = 13.0 / 24 #PIXIS
 def next_power_two(n):
     this_exp = int(math.log(n, 2))
     return 2**(this_exp + 1)
+    
+def get_line_densities(dist,pixsize=DEFAULT_PIXSIZE):
+    imgs = [ci(ff) for ff in dist.filelist]
+    cdimgs = [im.get_od_image() / im.s_lambda for im in imgs]
+    ldimgs = [bp.line_density(cdim, pixsize) for cdim in cdimgs]
+    ldsnorm = [ld/np.sum(ld) for ld in ldimgs]
+    
+    return ldsnorm,ldimgs
+    
+def plt_line_densities(dist,pixsize=DEFAULT_PIXSIZE):
+    ldsnorm, _ = get_line_densities(dist,pixsize)
+    for ld in ldsnorm:
+        plt.plot(ld)
+    #plt.show()
+
 
 def get_aligned_line_densities(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
     '''Produce aligned line densities from a distribution.
@@ -28,10 +43,7 @@ def get_aligned_line_densities(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAUL
             max_shift: maximum allowed shift, in pixels.
                         Images that need to be shifted more than this will be discarded
     '''
-    imgs = [ci(ff) for ff in dist.filelist]
-    cdimgs = [im.get_od_image() / im.s_lambda for im in imgs]
-    ldimgs = [bp.line_density(cdim, pixsize) for cdim in cdimgs]
-    ldsnorm = [ld/np.sum(ld) for ld in ldimgs]
+    ldsnorm,ldimgs = get_line_densities(dist)
 
     aligned = []
     shifts = []
@@ -47,20 +59,20 @@ def get_aligned_line_densities(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAUL
 def get_shift_stats(dist, max_shift=DEFAULT_MAX_SHIFT, pixsize=DEFAULT_PIXSIZE):
     _, shifts = get_aligned_line_densities(dist, max_shift)
     shift_mean = np.mean(shifts)
-    print shift_mean
-
+    shift_mean_um = shift_mean * pixsize
+    print 'Average shift needed: %2.1f um'%shift_mean_um
     shift_std = np.std(shifts)
-    print shift_std
 
     shift_um = shift_std * pixsize
     print 'Noise in lateral position: %2.1f um'%shift_um
 
+    plt.figure()
     plt.hist(np.array(shifts)*pixsize, 10)
-    plt.xlim(-5,5)
+    plt.xlim(-20,20)
     plt.xlabel('Shifts / um')
     plt.ylabel('Counts')
     plt.title('Histogram of shifts over %d runs'%len(shifts))
-    plt.show()
+    #plt.show()
 
 def get_ave_norm(dist, pixsize=DEFAULT_PIXSIZE, **kwargs):
     '''returns the average of image in a distribution, normalized
@@ -129,3 +141,4 @@ align_lds = get_aligned_line_densities
 sh_stats = get_shift_stats
 psd = get_power_spectral_density
 plt_ave_img=plt_ave_shifted_imag
+plt_lds=plt_line_densities
