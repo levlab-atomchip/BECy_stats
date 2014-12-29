@@ -4,13 +4,6 @@ import BECphysics as bp
 import matplotlib.pyplot as plt
 import numpy as np
 
-'''
-This script will generate a 2D field map given a data set.
-
-Currently shifting is nor included and the data sets are assume to have features that line up perfectly.
-
-Maybe want to shift 'lds' for some data set
-'''
 cdist = CD(r'C:\Users\Levlab\Documents\becy_stats_data\statistics\5umMap\2014-10-17')
 imgs = [ci(ff) for ff in cdist.filelist]
 cdimgs = [img.get_od_image / img.s_lambda for img in imgs]

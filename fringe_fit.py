@@ -23,34 +23,36 @@ def fit_sinusoid_1d(image, xdata):
     k_guess = 4*pi*np.sin(theta_guess) / WAVELENGTH
     p_0 = [A_guess, k_guess, 0, 0] #fit guess for k, phi, offset
 
-    coef, _ = curve_fit(sinusoid_1d, xdata, image, p0=p_0)
-    return coef
+    coef, covar = curve_fit(sinusoid_1d, xdata, image, p0=p_0)
+    return coef, covar
 
 if __name__ == "__main__":
     # img = ci(r'Z:\Data\ACM Data\MoveMicro_h_from_sample\2014-10-15\40.5\2014-10-15_192124.mat')
-    dir = r'Z:\Data\ACM Data\MoveMicro_h_from_sample\2014-10-15\40.5'
+    dir = r'D:\ACMData\Imaging System\expose_time\2014-10-16\MoveMicro40.5\fringes_fits'
     imgs = CD(dir, False).filelist
     thetas = []
     
     for f in imgs:
         img = ci(f)
         limg = img.light_image
-        # plt.imshow(limg)
-        # plt.show()
+        plt.imshow(limg)
+        plt.show()
 
-        limg_trunc = limg[0:200, :]
-        # plt.imshow(limg_trunc)
-        # plt.show()
+        limg_trunc = limg[:200, :]
+        plt.imshow(limg_trunc)
+        plt.show()
 
         light_pattern = np.sum(limg_trunc, axis = 1)
         distances = np.cumsum(np.ones(len(light_pattern))*(PIXELSIZE / MAGNIFICATION))
-        coef = fit_sinusoid_1d(light_pattern, distances)
-        # plt.plot(distances, sinusoid_1d(distances, *coef))
-        # plt.plot(distances, light_pattern)
-        # plt.show()
+        coef, covar = fit_sinusoid_1d(light_pattern, distances)
+        plt.plot(distances, sinusoid_1d(distances, *coef))
+        plt.plot(distances, light_pattern)
+        plt.show()
         
         theta_meas = np.arcsin(WAVELENGTH * coef[1] / (4*pi)) * 180 / pi
+        theta_std = np.arcsin(WAVELENGTH * np.sqrt(covar[1][1]) / (4*pi)) * 180 / pi
         thetas.append(theta_meas)
-        # print 'Theta: %2.2f'%theta_meas
-    print 'Mean Theta:\t%2.4f'%np.mean(thetas)
-    print 'Theta Std:\t%2.4f'%np.std(thetas)
+        print 'Theta: %2.2f'%theta_meas
+        print 'Theta Std: %2.2f'%theta_std
+    # print 'Mean Theta:\t%2.4f'%np.mean(thetas)
+    # print 'Theta Std:\t%2.4f'%np.std(thetas)

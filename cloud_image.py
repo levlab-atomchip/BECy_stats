@@ -122,7 +122,9 @@ def fit_bec_thermal(image):
     return coef
     
 def fit_partial_bec(image):
-    '''fits a gaussian and TF profile to a 1D image by trying a gaussian, then fitting to the wings, and then fitting a TF profile to the remainder.'''
+    '''fits a gaussian and TF profile to a 1D image by trying a gaussian, 
+    then fitting to the wings, and then fitting a TF profile to the remainder.
+    It's as bad as it sounds! I think a bayesian method would be better...'''
     WING_DEF = 1.5 #sigma
     gaussian_attempt = fit_gaussian_1d_noline(image)
     center_attempt = gaussian_attempt[1]
@@ -282,7 +284,7 @@ class CloudImage(object):
                 return
         return variables_dict
 
-    def get_od_image(self, fluc_cor_switch=True, trunc_switch=True):
+    def get_od_image(self, fluc_cor_switch=True, trunc_switch=True, abs_od = True):
         '''return the optical density image'''
         if trunc_switch:
             a_img = self.atom_image_trunc
@@ -293,20 +295,23 @@ class CloudImage(object):
             d_img = self.dark_image
             l_img = self.light_image
         if fluc_cor_switch:
-            od_image = abs(np.log((a_img
+            od_image = -np.log((a_img
                             - d_img).astype(float)
                             /(self.fluc_cor * l_img
-                            - d_img).astype(float)))
+                            - d_img).astype(float))
         else:
-            od_image = abs(np.log((a_img
+            od_image = -np.log((a_img
                             - d_img).astype(float)
                             /(l_img
-                            - d_img).astype(float)))
+                            - d_img).astype(float))
+        if abs_od:
+            od_image = np.abs(od_image)
         od_image[np.isnan(od_image)] = 0
         od_image[np.isinf(od_image)] = od_image[~np.isinf(od_image)].max()
         return od_image
         
     def get_vert_image(self):
+        '''return the sum of the three images, appropriate for persistent features, especially useful in vertical imaging to see the sample'''
         vert_image = self.atom_image + self.dark_image + self.light_image
         return vert_image
 
@@ -549,6 +554,7 @@ class CloudImage(object):
                         * self.pixel_size) / self.magnification
 
     def lengthconv(self, length, axis):
+        '''Convert length in pixels to physical length'''
         if axis == 0:
             return ((length * self.pixel_size
                 * self.image_angle_corr) / self.magnification)
