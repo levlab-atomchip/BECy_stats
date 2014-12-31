@@ -14,7 +14,10 @@ AMU = 1.66e-27 # kg, atomic mass unit
 M = 87*AMU #Rubidium-87 mass
 KB = 1.38e-23 # J/K, Boltzmann constant
 HBAR = 1.05e-34 # J/sec, Planck constant
+H = 2*pi*HBAR
 MUB = 9.274e-24 # J/T, Bohr Magneton
+C = 2.998e8 #m/s, speed of light
+LAMBDA_RB = 780.241e-9 #m, D2 line wavelength
 
 A = 5.6e-9 # m, Rb-87 scattering length
 G = 4*pi*HBAR**2*A / M # J*m^3, coupling constant

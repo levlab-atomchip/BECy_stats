@@ -21,7 +21,7 @@ import fit_double_gaussian as fdg
 import platform
 
 # Flags for setting module behavior
-DEBUG_FLAG = False                  #Debug mode; shows each fit
+DEBUG_FLAG = True                  #Debug mode; shows each fit
 LINEAR_BIAS_SWITCH = False          #Use linear bias in gaussian fits
 FLUC_COR_SWITCH = False             #Use fluctuation correction
 OFFSET_SWITCH = True                #Use fit to offset densities for number calculation

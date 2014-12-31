@@ -33,12 +33,6 @@ class CloudImage(object):
         self.filename = filename
         self.load_mat_file()
         
-        # imaging = self.get_variables_values()['IMAGING']
-        # if imaging == 2:
-            # self.image_angle_corr = 1 # prod chamber camera is at 45 deg
-            # # should really implement this as a camera object that gets passed
-        # else:
-            # self.image_angle_corr = 1
         self.image_angle_corr = 1 #this is not really implemented yet.
 
     def load_mat_file(self):
@@ -63,8 +57,8 @@ class CloudImage(object):
         self.pixel_size = self.hfig_main.calculation.pixSize
         self.image_rotation = self.hfig_main.display.imageRotation
         self.c1 = self.hfig_main.calculation.c1 # what is this?
-        self.s_lambda = self.hfig_main.calculation.s_lambda #what is this?
-        self.A = self.hfig_main.calculation.A #what is this?
+        self.s_lambda = self.hfig_main.calculation.s_lambda # atomic cross section
+        self.A = self.hfig_main.calculation.A # real space pixel area
 
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
@@ -90,8 +84,19 @@ class CloudImage(object):
         self.fluc_win_y = self.hfig_main.calculation.flucWinY
         
         self.set_fluc_corr(self.fluc_win_x[0], self.fluc_win_x[-1], self.fluc_win_y[0], self.fluc_win_y[-1])
+
+        self.quantum_efficiency = self.guess_quantum_efficiency()
         
         return
+
+    def guess_quantum_efficiency(self):
+        '''Use the magnification to guess whether this is a PIXIS image or a dragonfly image, and return appropriate quantum efficiency'''
+        if self.magnification > 10:
+            # PIXIS is about 20-24
+            return 0.96
+        else:
+            # Must be a dragonfly
+            return 0.25
 
     def set_fluc_corr(self, x1, x2, y1, y2):
         '''Calculate fluctuation correction given a fluctuation window'''
@@ -109,7 +114,6 @@ class CloudImage(object):
         self.atom_image_trunc = self.atom_image[y1:y2, x1:x2]
         self.light_image_trunc = self.light_image[y1:y2, x1:x2]
         self.dark_image_trunc = self.dark_image[y1:y2, x1:x2]
-
 
     def get_variables_file(self):
         '''returns the variables file?'''
@@ -131,8 +135,13 @@ class CloudImage(object):
                 return
         return variables_dict
 
-    def get_od_image(self, fluc_cor_switch=True, trunc_switch=True, abs_od = True):
-        '''return the optical density image'''
+    def get_od_image(self
+            , fluc_cor_switch=True
+            , trunc_switch=True
+            , abs_od=True
+            , intensity_correction_switch=False
+            ):
+        '''return the optical depth image'''
         if trunc_switch:
             a_img = self.atom_image_trunc
             d_img = self.dark_image_trunc
@@ -281,6 +290,8 @@ class CloudImage(object):
         od_image = self.get_od_image(fluc_cor_switch)
         imgcut_x = np.sum(od_image, 0)
         imgcut_z = np.sum(od_image, 1)
+
+        # Get fits in both axes
         try:
             if linear_bias_switch:
                 coefs_x = fit_gaussian_1d(imgcut_x)
@@ -303,8 +314,7 @@ class CloudImage(object):
             coefs_z = [0,0,0]
             print 'Fit Error in Z'
         
-        
-        # Using a switch to choose which axis gives offset;need to add linear bias correction!
+        # Using a switch to choose which axis gives offset
         if fit_axis==1:
             try:
                 offset = coefs_z[3]
@@ -319,6 +329,7 @@ class CloudImage(object):
             slope = slope_x
             axis_len = len(imgcut_x)
             
+        # Calculate atom number
         if offset_switch:
             atom_number = self.A/self.s_lambda*(np.sum(od_image) 
                                 - 0.5*slope*axis_len**2
@@ -326,6 +337,7 @@ class CloudImage(object):
         else:
             atom_number = self.A/self.s_lambda*(np.sum(od_image))
 
+        # Display debug window
         if debug_flag:
             print self.filename
             print 'M: %2.2f'%self.magnification
@@ -356,6 +368,7 @@ class CloudImage(object):
             plt.show()
             print "Fitting window: (%d, %d) to (%d, %d)"%(self.trunc_win_x[0], self.trunc_win_y[0], self.trunc_win_x[-1], self.trunc_win_y[-1])
             print "Fluctuation window: (%d, %d) to (%d, %d)"%(self.fluc_win_x[0], self.fluc_win_y[0], self.fluc_win_x[-1], self.fluc_win_y[-1])
+        # Calculate and return cloud properties in desired units
         if not pixel_units:
             return {'atom_number': atom_number,
                     'position_x':(self.distconv(coefs_x[1], axis=0)
