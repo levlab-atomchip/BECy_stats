@@ -19,13 +19,16 @@ DEFAULT_X_SECTION = 1.55e-13 #m**2, pi light steady state
 
 def optical_depth(cloudimage
         , saturation_intensity=DEFAULT_I_SAT
+        , **kwargs
         ):
     optical_density = cloudimage.get_od_image()
-    intensity_term = intensity_change(cloudimage) / saturation_intensity
+    intensity_term = intensity_change(cloudimage, **kwargs) / saturation_intensity
     return optical_density + intensity_term
 
-def intensity_change(cloudimage):
-    return counts2intensity(cloudimage.light_image_trunc) - counts2intensity(cloudimage.atom_image_trunc)
+def intensity_change(cloudimage
+        , **kwargs
+        ):
+    return counts2intensity(cloudimage.light_image_trunc, **kwargs) - counts2intensity(cloudimage.atom_image_trunc, **kwargs)
 
 def counts2intensity(rawimage
         , quantum_efficiency=DEFAULT_QUANTUM_EFFICIENCY
@@ -36,14 +39,16 @@ def counts2intensity(rawimage
 
 def counts2saturation(rawimage
         , saturation_intensity=DEFAULT_I_SAT
+        , **kwargs
         ):
-    return counts2intensity(rawimage)/saturation_intensity
+    return counts2intensity(rawimage, **kwargs)/saturation_intensity
 
 def atom_number(cloudimage
         , x_section=DEFAULT_X_SECTION
         , pix_size=DEFAULT_PIX_SIZE
+        , **kwargs
         ):
-    return np.sum(optical_depth(cloudimage)) / x_section * pix_size**2
+    return np.sum(optical_depth(cloudimage, **kwargs)) / x_section * pix_size**2
 
 def optdens_number(cloudimage):
     return cloudimage.atom_number()
@@ -52,6 +57,7 @@ def int_term_number(cloudimage
         , x_section=DEFAULT_X_SECTION
         , pix_size=DEFAULT_PIX_SIZE
         , saturation_intensity=DEFAULT_I_SAT
+        , **kwargs
         ):
-    int_term = intensity_change(cloudimage) / saturation_intensity
+    int_term = intensity_change(cloudimage, **kwargs) / saturation_intensity
     return np.sum(int_term) / x_section * pix_size**2
