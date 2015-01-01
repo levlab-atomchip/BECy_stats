@@ -164,3 +164,19 @@ def fit_gaussian_2d(image):
     return coef
 
 
+def temp_func(t, sigma_0, sigma_v):
+    '''fitting function for temperature measurement'''
+    return np.sqrt(sigma_0**2 + (sigma_v**2)*(t**2))
+
+def lifetime_func(t, N0, decay_rate, offset):
+    '''fitting function for lifetime measurement'''
+    return N0 * np.exp(-decay_rate * t) + offset
+    
+def freq_func(t, omega, amplitude, offset, phase):
+    '''fitting function for trap frequency measurement'''
+    return offset + amplitude*np.sin(omega*t + phase)
+    
+def magnif_func(x, a, b, c):
+    '''fitting function for magnification measurement'''
+    return a*np.square(x) + b*x + c
+ 

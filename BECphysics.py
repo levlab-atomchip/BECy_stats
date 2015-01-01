@@ -18,6 +18,7 @@ H = 2*pi*HBAR
 MUB = 9.274e-24 # J/T, Bohr Magneton
 C = 2.998e8 #m/s, speed of light
 LAMBDA_RB = 780.241e-9 #m, D2 line wavelength
+GRAVITY = 9.8 #m/s**2, gravitational acceleration
 
 A = 5.6e-9 # m, Rb-87 scattering length
 G = 4*pi*HBAR**2*A / M # J*m^3, coupling constant
