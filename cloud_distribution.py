@@ -680,35 +680,4 @@ class CloudDistribution(object):
 CD = CloudDistribution
         
 if __name__ == "__main__":
-    directory = r'D:\ACMData\Statistics\mac_capture_number\2014-01-23\\'
-    MY_DISTS = CloudDistribution(directory)
-
-    atom_number_options =   {"axis": 1,
-                            "offset_switch": True,
-                            "flucCor_switch": True,
-                            "debug_flag": False,
-                            "linear_bias_switch": True}
-    # position_options =      {"flucCor_switch": True,
-                            # "linear_bias_switch": True}
-    # width_options =         {"axis": 0} #x axis
-
-    MY_DISTS.plot_distribution('atom_number',**atom_number_options)
-    MY_DISTS.display_statistics('atom_number',**atom_number_options)
-    # MY_DISTS.plot_distribution('position_x', **position_options)
-    # MY_DISTS.display_statistics('position_x', **position_options)
-    # MY_DISTS.plot_distribution('width_x', **width_options)
-    # MY_DISTS.display_statistics('width_x', **width_options)
-    # MY_DISTS.plot_distribution('light_counts')
-    # MY_DISTS.display_statistics('light_counts')
-    # MY_DISTS.regression('position_x', 'atom_number')
-
-    # MY_DISTS.plot_gaussian_params()
-    # MY_DISTS.regression('position_x', 'width_x')
-    # MY_DISTS.regression('position_x', 'atom_number')
-    # MY_DISTS.regression('width_x', 'atom_number')
-    # MY_DISTS.plot_distribution('width_x')
-    # MY_DISTS.display_statistics('width_x')
-
-    # MY_DISTS.plot_distribution('position_x')
-    # MY_DISTS.display_statistics('position_x')
-    #MY_DISTS.kmeans('position_x', 'atom_number', 2)
+    pass
