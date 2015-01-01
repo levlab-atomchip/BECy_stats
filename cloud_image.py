@@ -12,6 +12,7 @@ import os
 from math import sqrt
 from scipy.ndimage import rotate
 from fit_functions import *
+import BECphysics as bp
 
 
 DEBUG_FLAG = False
@@ -141,7 +142,7 @@ class CloudImage(object):
             , abs_od=True
             , intensity_correction_switch=False
             ):
-        '''return the optical depth image'''
+        '''return the optical density image'''
         if trunc_switch:
             a_img = self.atom_image_trunc
             d_img = self.dark_image_trunc
@@ -165,6 +166,30 @@ class CloudImage(object):
         od_image[np.isnan(od_image)] = 0
         od_image[np.isinf(od_image)] = od_image[~np.isinf(od_image)].max()
         return od_image
+
+    def get_cd_image(self, **kwargs):
+	'''return the column density, with offset removed'''
+	od_image = self.get_od_image(**kwargs)
+	imgcut = np.sum(od_image, 1)
+        try:
+            if linear_bias_switch:
+                coefs = fit_gaussian_1d(imgcut)
+            else:
+                coefs = fit_gaussian_1d_noline(imgcut)
+        except:
+            raise FitError('atom_number')
+
+        offset = coefs[3] / od_image.shape[1]
+	return (od_image - offset) / self.s_lambda
+
+    def get_gerbier_field(self, **kwargs):
+        '''return the magnetic field reconstructed using the gerbier equation, with mu=0'''
+	column_density = self.get_cd_image(**kwargs)
+	line_density = bp.line_density(column_density
+			, pixel_size = self.pixel_size)
+	gerbier_field = bp.field_array(line_density, **kwargs)
+	return gerbier_field
+
         
     def get_vert_image(self):
         '''return the sum of the three images, appropriate for persistent features, especially useful in vertical imaging to see the sample'''
