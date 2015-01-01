@@ -3,9 +3,7 @@
 This is a class definition for getting distributional
 information over a set of cloud images in a single directory.'''
 
-import csv
 import fittemp
-from numpy import array
 from scipy.cluster.vq import kmeans, vq
 from scipy.optimize import curve_fit
 import cloud_image
@@ -19,6 +17,8 @@ import hempel
 import pprint
 import fit_double_gaussian as fdg
 import platform
+from BECphysics import M, KB, GRAVITY
+from fit_functions import temp_func, lifetime_func, freq_func, magnif_func
 
 # Flags for setting module behavior
 DEBUG_FLAG = True                  #Debug mode; shows each fit
@@ -37,48 +37,14 @@ if DOUBLE_GAUSSIAN:
 
 CUSTOM_FIT_WINDOW = [355,945,190,320]   #x0, x1, y0, y1
 CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
-G = 9.8 #m/s^2, gravitational acceleration
-M = 87*1.66e-27 #kg, Rb 87 mass
-KB = 1.38e-23 #J/K, Boltzmann constant
 cloud_width = 1.0*10**-6.0 #used in OVERLAP, assuming the overlapping gaussians both have the same sigma of 1um
-
-def temp_func(t, sigma_0, sigma_v):
-    '''fitting function for temperature measurement'''
-    return np.sqrt(sigma_0**2 + (sigma_v**2)*(t**2))
-
-def lifetime_func(t, N0, decay_rate, offset):
-    '''fitting function for lifetime measurement'''
-    return N0 * np.exp(-decay_rate * t) + offset
-    
-def freq_func(t, omega, amplitude, offset, phase):
-    '''fitting function for trap frequency measurement'''
-    return offset + amplitude*np.sin(omega*t + phase)
-    
-def magnif_func(x, a, b, c):
-    '''fitting function for magnification measurement'''
-    return a*np.square(x) + b*x + c
-            
+           
 
 class CloudDistribution(object):
     '''class representing distributions of parameters over many images'''
 
     def __init__(self, directory=None, INITIALIZE_GAUSSIAN_PARAMS=True):
 
-        # Open a windows dialog box for selecting a folder
-        # if directory is None:
-            # desktop_pidl = shell.SHGetFolderLocation(0,
-                        # shellcon.CSIDL_DESKTOP, 0, 0)
-            # pidl, _, _ = shell.SHBrowseForFolder(
-                # win32gui.GetDesktopWindow(),
-                # desktop_pidl,
-                # "Choose a folder",
-                # 0,
-                # None,
-                # None
-            # )
-            # self.directory = shell.SHGetPathFromIDList(pidl)
-
-        # else:
         self.directory = directory
         self.INITIALIZE_GAUSSIAN_PARAMS = INITIALIZE_GAUSSIAN_PARAMS
 
@@ -111,12 +77,6 @@ class CloudDistribution(object):
             print("Initializing Gaussian Parameters")
             self.initialize_gaussian_params(**self.gaussian_fit_options)
         
-            # outputfile = self.directory + '\\numbers' + '.csv'
-            # with open(outputfile, 'w') as f:
-                # writer = csv.writer(f)
-                # for filename, num in zip(self.filelist, self.dists['atom_number']):
-                    # writer.writerow([filename, num])
-
     def initialize_gaussian_params(self, **kwargs):
         '''Calculate the most commonly used parameters
         that can be extracted from a gaussian fit'''
@@ -526,10 +486,10 @@ class CloudDistribution(object):
         T = np.array(self.dists['tof'])
         Y = np.array(self.dists['position_z'])
         Y = np.max(Y)-Y
-        p0 = np.array([G*3.0 / (2.0 * CAMPIXSIZE), 0, np.min(Y)])
+        p0 = np.array([GRAVITY*3.0 / (2.0 * CAMPIXSIZE), 0, np.min(Y)])
         popt, pcov = curve_fit(magnif_func, T, Y, p0)
-        M = 2*popt[0] * CAMPIXSIZE / G
-        sigma = 2*np.sqrt(pcov[0][0]) * CAMPIXSIZE / G
+        M = 2*popt[0] * CAMPIXSIZE / GRAVITY
+        sigma = 2*np.sqrt(pcov[0][0]) * CAMPIXSIZE / GRAVITY
         print "Magnification: %2.2f"%M
         print "Sigma: %2.2f"%sigma
         plt.plot(T, Y, '.')
@@ -573,7 +533,7 @@ class CloudDistribution(object):
             print var2 + ' distribution has not been created.'
             raise KeyError
         # data generation
-        data = np.transpose(array([self.dists[var1], self.dists[var2]]))
+        data = np.transpose(np.array([self.dists[var1], self.dists[var2]]))
 
         # computing K-Means with K = num_clusters
         centroids, _ = kmeans(data, num_clusters)
@@ -669,46 +629,8 @@ class CloudDistribution(object):
             return (coef[2]+coef[3])/2.0
         else:
             print 'Incorrect key: parameter may not exist for fitting double gaussian.'
-        
-    
-    '''def initialize_double_gaussian(self,file,p_0_guess=None):
-        #called during initialize_gaussian_params if DOUBLE_GAUSSIAN = True
-        print "Processing " + file
-        self.get_double_gaussian_params(file,p_0_guess)'''
-   
 
 CD = CloudDistribution
         
 if __name__ == "__main__":
-    directory = r'D:\ACMData\Statistics\mac_capture_number\2014-01-23\\'
-    MY_DISTS = CloudDistribution(directory)
-
-    atom_number_options =   {"axis": 1,
-                            "offset_switch": True,
-                            "flucCor_switch": True,
-                            "debug_flag": False,
-                            "linear_bias_switch": True}
-    # position_options =      {"flucCor_switch": True,
-                            # "linear_bias_switch": True}
-    # width_options =         {"axis": 0} #x axis
-
-    MY_DISTS.plot_distribution('atom_number',**atom_number_options)
-    MY_DISTS.display_statistics('atom_number',**atom_number_options)
-    # MY_DISTS.plot_distribution('position_x', **position_options)
-    # MY_DISTS.display_statistics('position_x', **position_options)
-    # MY_DISTS.plot_distribution('width_x', **width_options)
-    # MY_DISTS.display_statistics('width_x', **width_options)
-    # MY_DISTS.plot_distribution('light_counts')
-    # MY_DISTS.display_statistics('light_counts')
-    # MY_DISTS.regression('position_x', 'atom_number')
-
-    # MY_DISTS.plot_gaussian_params()
-    # MY_DISTS.regression('position_x', 'width_x')
-    # MY_DISTS.regression('position_x', 'atom_number')
-    # MY_DISTS.regression('width_x', 'atom_number')
-    # MY_DISTS.plot_distribution('width_x')
-    # MY_DISTS.display_statistics('width_x')
-
-    # MY_DISTS.plot_distribution('position_x')
-    # MY_DISTS.display_statistics('position_x')
-    #MY_DISTS.kmeans('position_x', 'atom_number', 2)
+    pass

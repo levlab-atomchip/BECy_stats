@@ -21,7 +21,8 @@ def optical_depth(cloudimage
         , saturation_intensity=DEFAULT_I_SAT
         , **kwargs
         ):
-    optical_density = cloudimage.get_od_image()
+#    optical_density = cloudimage.get_od_image()
+    optical_density = cloudimage.get_cd_image() * cloudimage.s_lambda
     intensity_term = intensity_change(cloudimage, **kwargs) / saturation_intensity
     return optical_density + intensity_term
 

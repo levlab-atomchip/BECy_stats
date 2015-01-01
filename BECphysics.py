@@ -18,6 +18,7 @@ H = 2*pi*HBAR
 MUB = 9.274e-24 # J/T, Bohr Magneton
 C = 2.998e8 #m/s, speed of light
 LAMBDA_RB = 780.241e-9 #m, D2 line wavelength
+GRAVITY = 9.8 #m/s**2, gravitational acceleration
 
 A = 5.6e-9 # m, Rb-87 scattering length
 G = 4*pi*HBAR**2*A / M # J*m^3, coupling constant
@@ -91,12 +92,19 @@ def density_map(cds, xaxis, ylocs, pixel_size=PIXELSIZE):
     ldsarr = np.array(lds)
     return ldsarr
     
-def field_array(l_density, omega_rad=2*pi*1000, omega_long=2*pi*10):
+def field_array(l_density
+		, omega_rad=2*pi*1000
+		, omega_long=2*pi*10
+		, USE_TF_MU=False
+		):
     '''Given a linear atom density, returns a 1D field profile, for producing a map of magnetic field
     omega_rad - radial frequency in radian
     omega_long - axial frequency in radian
     '''
-    mu = chemical_potential(l_density, omega_rad, omega_long) #this is sketchy
+    if USE_TF_MU:
+        mu = chemical_potential(l_density, omega_rad, omega_long) #this is sketchy
+    else:
+	mu = 0
     return (mu - HBAR*omega_rad * np.sqrt(1 + 4*A*l_density)) / MUB
     
 def chemical_potential(line_density, omega_rad, omega_long):
