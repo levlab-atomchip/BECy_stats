@@ -94,9 +94,6 @@ class CloudImage(object):
         self.fluc_win_y = self.hfig_main.calculation.flucWinY
         
         self.set_fluc_corr(self.fluc_win_x[0], self.fluc_win_x[-1], self.fluc_win_y[0], self.fluc_win_y[-1])
-
-        self.quantum_efficiency = self.guess_quantum_efficiency()
-        
         return
 
     def set_fluc_corr(self, x1, x2, y1, y2):

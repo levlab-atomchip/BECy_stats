@@ -12,9 +12,8 @@ from BECphysics import C, H, LAMBDA_RB
 import numpy as np
 
 DEFAULT_I_SAT = 30.54 # W/m**2, for pi light
-# DEFAULT_PIX_SIZE = 3.75e-6/1.86 #m, dragonfly
-# DEFAULT_QUANTUM_EFFICIENCY = 0.25 # dragonfly
-DEFAULT_PIX_SIZE = 13.0e-6/24 #m, pixis
+DEFAULT_PIX_SIZE = 13.0e-6 #m, pixis
+DEFAULT_MAGNIFICATION = 24.0
 DEFAULT_QUANTUM_EFFICIENCY = 0.95 # pixis
 DEFAULT_IMAGE_TIME = 10e-6 #s
 DEFAULT_X_SECTION = 1.55e-13 #m**2, pi light steady state
@@ -47,9 +46,10 @@ def intensity_change(cloudimage
 def counts2intensity(rawimage
         , quantum_efficiency=DEFAULT_QUANTUM_EFFICIENCY
         , pix_size=DEFAULT_PIX_SIZE
+        , magnification=DEFAULT_MAGNIFICATION
         , image_time=DEFAULT_IMAGE_TIME
         ):
-    return (rawimage / quantum_efficiency)*(H*C/LAMBDA_RB) / (pix_size**2) / image_time
+    return (rawimage / quantum_efficiency)*(H*C/LAMBDA_RB) / ((pix_size / magnification)**2) / image_time
 
 def saturation(cloudimage):
     this_image_time = get_image_time(cloudimage)
@@ -64,8 +64,9 @@ def counts2saturation(rawimage
 def atom_number(cloudimage
         , x_section=DEFAULT_X_SECTION
         , pix_size=DEFAULT_PIX_SIZE
+        , magnification=DEFAULT_MAGNIFICATION
         ):
-    return np.sum(optical_depth(cloudimage)) / x_section * pix_size**2
+    return np.sum(optical_depth(cloudimage)) / x_section * (pix_size / magnification)**2
 
 def optdens_number(cloudimage):
     return cloudimage.atom_number()
@@ -73,7 +74,8 @@ def optdens_number(cloudimage):
 def int_term_number(cloudimage
         , x_section=DEFAULT_X_SECTION
         , pix_size=DEFAULT_PIX_SIZE
+        , magnification=DEFAULT_MAGNIFICATION
         , saturation_intensity=DEFAULT_I_SAT
         ):
     int_term = intensity_change(cloudimage) / saturation_intensity
-    return np.sum(int_term) / x_section * pix_size**2
+    return np.sum(int_term) / x_section * (pix_size / magnification)**2
