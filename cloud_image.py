@@ -19,7 +19,8 @@ DEBUG_FLAG = False
 
 FILE_RE = re.compile(r'.(\d{6})\.mat')
 
-
+DEFAULT_IMAGE_TIME = 10e-6 #sec
+DEFAULT_I_SAT = 30.54 # W/m**2, for pi light 
 
 class FitError(Exception):
     '''A rather generic error to raise if the gaussian fit fails'''
@@ -438,3 +439,27 @@ class CloudImage(object):
                 * self.image_angle_corr) / self.magnification)
         elif axis == 1:
             return (length * self.pixel_size) / self.magnification
+
+
+    def counts2intensity(self, rawimage):
+        return (rawimage / self.quantum_efficiency)*(H*C/LAMBDA_RB) / ((self.pix_size / self.magnification)**2) / self.get_image_time()
+    
+    def counts2saturation(self
+		    , rawimage
+                    , saturation_intensity=DEFAULT_I_SAT
+                    ):
+        return self.counts2intensity(rawimage)/saturation_intensity
+
+    def get_image_time(self):
+        if self.cont_par_name == 'ExposeTime':
+            return self.curr_cont_par
+        else:
+            try:
+                this_image_time = self.get_variables_values()['ExposeTime']
+            except:
+                this_image_time = DEFAULT_IMAGE_TIME
+            return this_image_time
+
+
+
+
