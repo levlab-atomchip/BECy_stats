@@ -16,7 +16,7 @@ import numpy as np
 
 def sat_vs_num(data_dir, **kwargs):
     '''Given a directory, return the saturation parameters and intensity-corrected atom numbers from each image'''
-    data_filenames = glob.glob(data_dir + '/*.mat')
+    data_filenames = sorted(glob.glob(data_dir + '/*.mat'))
 
     saturation2num = []
 
@@ -32,7 +32,7 @@ def sat_vs_num(data_dir, **kwargs):
 
 def od_parts(data_dir, **kwargs):
     '''Given a directory, return the saturation parameters, optical densities, and intensity correction terms from each image'''
-    data_filenames = glob.glob(data_dir + '/*.mat')
+    data_filenames = sorted(glob.glob(data_dir + '/*.mat'))
 
     saturation2od_parts = []
 
