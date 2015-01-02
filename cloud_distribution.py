@@ -21,9 +21,9 @@ from BECphysics import M, KB, GRAVITY
 from fit_functions import temp_func, lifetime_func, freq_func, magnif_func
 
 # Flags for setting module behavior
-DEBUG_FLAG = True                  #Debug mode; shows each fit
+DEBUG_FLAG = False                  #Debug mode; shows each fit
 LINEAR_BIAS_SWITCH = False          #Use linear bias in gaussian fits
-FLUC_COR_SWITCH = False             #Use fluctuation correction
+FLUC_COR_SWITCH = True             #Use fluctuation correction
 OFFSET_SWITCH = True                #Use fit to offset densities for number calculation
 FIT_AXIS = 1;                       #0 is x, 1 is z      
 CUSTOM_FIT_SWITCH = False            #Use CUSTOM_FIT_WINDOW

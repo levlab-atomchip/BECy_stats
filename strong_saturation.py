@@ -13,6 +13,7 @@ import glob
 import matplotlib.pyplot as plt
 import numpy as np
 
+DEFAULT_IMAGE_TIME = 10e-6
 
 def sat_vs_num(data_dir, **kwargs):
     '''Given a directory, return the saturation parameters and intensity-corrected atom numbers from each image'''
@@ -23,8 +24,8 @@ def sat_vs_num(data_dir, **kwargs):
     for index, datum in enumerate(data_filenames):
 	print 'Processing Image %d'%(index+1)
         this_img = ci.CloudImage(datum)
-        this_number = ic.atom_number(this_img, **kwargs)
-        this_saturation = np.mean(ic.counts2saturation(this_img.light_image_trunc, **kwargs))
+        this_number = ic.atom_number(this_img)
+        this_saturation = ic.saturation(this_img)
         saturation2num.append((this_saturation, this_number))
 
     saturations, nums = zip(*saturation2num)
@@ -37,12 +38,12 @@ def od_parts(data_dir, **kwargs):
     saturation2od_parts = []
 
     for index, datum in enumerate(data_filenames):
-	print 'Processing Image %d'%(index+1)
-	this_img = ci.CloudImage(datum)
-	this_saturation = np.mean(ic.counts2saturation(this_img.light_image_trunc, **kwargs))
-	this_optdens_part = ic.optdens_number(this_img)
-	this_int_part = ic.int_term_number(this_img, **kwargs)
-	saturation2od_parts.append((this_saturation, this_optdens_part, this_int_part))
+        print 'Processing Image %d'%(index+1)
+        this_img = ci.CloudImage(datum)
+        this_saturation = ic.saturation(this_img)
+        this_optdens_part = ic.optdens_number(this_img)
+        this_int_part = ic.int_term_number(this_img)
+        saturation2od_parts.append((this_saturation, this_optdens_part, this_int_part))
 
     saturations, optdens_parts, int_parts = zip(*saturation2od_parts)
     return (saturations, optdens_parts, int_parts)

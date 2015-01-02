@@ -122,7 +122,7 @@ class CloudImage(object):
         sub_blocks = {}
         for i in xrange(scipy.shape(sub_block_data)[0]):
             sub_blocks[sub_block_data[i][0]] = sub_block_data[i][1]
-        return sub_blocks
+        return sub_blocks['Variables.m']
 
     def get_variables_values(self):
         '''returns a dictionary mapping variable names to values'''
