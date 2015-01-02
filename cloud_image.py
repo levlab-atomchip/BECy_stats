@@ -61,6 +61,16 @@ class CloudImage(object):
         self.s_lambda = self.hfig_main.calculation.s_lambda # atomic cross section
         self.A = self.hfig_main.calculation.A # real space pixel area
 
+	if self.pixel_size==3.75e-6:
+	    #dragonfly
+	    self.quantum_efficiency = 0.25
+	elif self.pixel_size==13.0e-6:
+            #pixis
+	    self.quantum_efficiency = 0.95
+	else:
+	    self.quantum_efficiency = None
+
+
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
 	self.trunc_x_lim = (self.trunc_win_x[0], self.trunc_win_x[-1])
