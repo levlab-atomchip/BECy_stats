@@ -29,7 +29,7 @@ def saturation(cloudimage):
     return np.mean(cloudimage.counts2saturation(cloudimage.light_image_trunc))
 
 def atom_number(cloudimage):
-    return np.sum(optical_depth(cloudimage)) / cloudimage.s_lambda * (cloudimage.pixel_size / cloud_image.magnification)**2
+    return np.sum(optical_depth(cloudimage)) / cloudimage.s_lambda * (cloudimage.pixel_size / cloudimage.magnification)**2
 
 def optdens_number(cloudimage):
     return cloudimage.atom_number()

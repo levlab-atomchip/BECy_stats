@@ -13,7 +13,7 @@ from math import sqrt
 from scipy.ndimage import rotate
 from fit_functions import *
 import BECphysics as bp
-
+from BECphysics import C, H, LAMBDA_RB
 
 DEBUG_FLAG = False
 
@@ -62,10 +62,10 @@ class CloudImage(object):
         self.s_lambda = self.hfig_main.calculation.s_lambda # atomic cross section
         self.A = self.hfig_main.calculation.A # real space pixel area
 
-	if self.pixel_size==3.75e-6:
+	if 3.0e-6<self.pixel_size<4.0e-6:
 	    #dragonfly
 	    self.quantum_efficiency = 0.25
-	elif self.pixel_size==13.0e-6:
+	elif 12.0e-6<self.pixel_size<14.0e-6:
             #pixis
 	    self.quantum_efficiency = 0.95
 	else:
@@ -165,28 +165,28 @@ class CloudImage(object):
         od_image[np.isinf(od_image)] = od_image[~np.isinf(od_image)].max()
         return od_image
 
-    def get_cd_image(self, **kwargs):
-	'''return the column density, with offset removed'''
-	od_image = self.get_od_image(**kwargs)
-	imgcut = np.sum(od_image, 1)
-        try:
-            if linear_bias_switch:
-                coefs = fit_gaussian_1d(imgcut)
-            else:
-                coefs = fit_gaussian_1d_noline(imgcut)
-        except:
-            raise FitError('atom_number')
+    def get_cd_image(self, axis=1, linear_bias_switch=False, **kwargs):
+        '''return the column density, with offset removed'''
+        od_image = self.get_od_image(**kwargs)
+        imgcut = np.sum(od_image, axis)
+       # try:
+        if linear_bias_switch:
+            coefs = fit_gaussian_1d(imgcut)
+        else:
+            coefs = fit_gaussian_1d_noline(imgcut)
+       # except:
+       #     raise FitError('atom_number')
 
         offset = coefs[3] / od_image.shape[1]
-	return (od_image - offset) / self.s_lambda
+        return (od_image - offset) / self.s_lambda
 
     def get_gerbier_field(self, **kwargs):
         '''return the magnetic field reconstructed using the gerbier equation, with mu=0'''
-	column_density = self.get_cd_image(**kwargs)
-	line_density = bp.line_density(column_density
-			, pixel_size = self.pixel_size)
-	gerbier_field = bp.field_array(line_density, **kwargs)
-	return gerbier_field
+        column_density = self.get_cd_image(**kwargs)
+        line_density = bp.line_density(column_density
+                , pixel_size = self.pixel_size)
+        gerbier_field = bp.field_array(line_density, **kwargs)
+        return gerbier_field
 
         
     def get_vert_image(self):
@@ -442,7 +442,7 @@ class CloudImage(object):
 
 
     def counts2intensity(self, rawimage):
-        return (rawimage / self.quantum_efficiency)*(H*C/LAMBDA_RB) / ((self.pix_size / self.magnification)**2) / self.get_image_time()
+        return (rawimage / self.quantum_efficiency)*(H*C/LAMBDA_RB) / ((self.pixel_size / self.magnification)**2) / self.get_image_time()
     
     def counts2saturation(self
 		    , rawimage
