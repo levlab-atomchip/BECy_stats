@@ -70,7 +70,6 @@ class CloudImage(object):
 	else:
 	    self.quantum_efficiency = None
 
-
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
 	self.trunc_x_lim = (self.trunc_win_x[0], self.trunc_win_x[-1])
@@ -99,15 +98,6 @@ class CloudImage(object):
         self.quantum_efficiency = self.guess_quantum_efficiency()
         
         return
-
-    def guess_quantum_efficiency(self):
-        '''Use the magnification to guess whether this is a PIXIS image or a dragonfly image, and return appropriate quantum efficiency'''
-        if self.magnification > 10:
-            # PIXIS is about 20-24
-            return 0.96
-        else:
-            # Must be a dragonfly
-            return 0.25
 
     def set_fluc_corr(self, x1, x2, y1, y2):
         '''Calculate fluctuation correction given a fluctuation window'''
