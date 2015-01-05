@@ -62,19 +62,19 @@ class CloudImage(object):
         self.s_lambda = self.hfig_main.calculation.s_lambda # atomic cross section
         self.A = self.hfig_main.calculation.A # real space pixel area
 
-	if 3.0e-6<self.pixel_size<4.0e-6:
-	    #dragonfly
-	    self.quantum_efficiency = 0.25
-	elif 12.0e-6<self.pixel_size<14.0e-6:
-            #pixis
-	    self.quantum_efficiency = 0.95
-	else:
-	    self.quantum_efficiency = None
+        if 3.0e-6<self.pixel_size<4.0e-6:
+            #dragonfly
+            self.quantum_efficiency = 0.25
+        elif 12.0e-6<self.pixel_size<14.0e-6:
+                #pixis
+            self.quantum_efficiency = 0.95
+        else:
+            self.quantum_efficiency = None
 
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
         self.trunc_win_y = self.hfig_main.calculation.truncWinY
-	self.trunc_x_lim = (self.trunc_win_x[0], self.trunc_win_x[-1])
-	self.trunc_y_lim = (self.trunc_win_y[0], self.trunc_win_y[-1])
+        self.trunc_x_lim = (self.trunc_win_x[0], self.trunc_win_x[-1])
+        self.trunc_y_lim = (self.trunc_win_y[0], self.trunc_win_y[-1])
         
         if self.image_rotation != 0:
             self.atom_image = rotate(self.atom_image, self.image_rotation)
@@ -172,23 +172,28 @@ class CloudImage(object):
         else:
             od_image = self.get_od_image(**kwargs)
         imgcut = np.sum(od_image, axis)
-       # try:
-        if linear_bias_switch:
-            coefs = fit_gaussian_1d(imgcut)
-        else:
-            coefs = fit_gaussian_1d_noline(imgcut)
-       # except:
-       #     raise FitError('atom_number')
+        try:
+            if linear_bias_switch:
+                coefs = fit_gaussian_1d(imgcut)
+                offset = coefs[3] / od_image.shape[1]
+            else:
+                coefs = fit_gaussian_1d_noline(imgcut)
+                offset = coefs[3] / od_image.shape[1]
+        except RunTimeError:
+            offset = np.mean(imgcut) / od_image.shape[1]
+            raise FitError('atom_number')
 
-        offset = coefs[3] / od_image.shape[1]
         return (od_image - offset) / self.s_lambda
 
     def get_gerbier_field(self, **kwargs):
         '''return the magnetic field reconstructed using the gerbier equation, with mu=0'''
-        column_density = self.get_cd_image(**kwargs)
+        try:
+            column_density = self.get_cd_image(**kwargs)
+        except FitError:
+            print('FYI, gaussian fit failed')
         line_density = bp.line_density(column_density
                 , pixel_size = self.pixel_size)
-        gerbier_field = bp.field_array(line_density, **kwargs)
+        gerbier_field = bp.field_array(line_density)
         return gerbier_field
         
     def get_vert_image(self):
@@ -464,10 +469,7 @@ class CloudImage(object):
 
     def optical_depth(self
         , saturation_intensity=DEFAULT_I_SAT):
-        try:
-            optical_density = self.get_cd_image() * self.s_lambda
-        except FitError:
-            optical_density = self.get_od_image()
+        optical_density = self.get_od_image()
         intensity_term = self.intensity_change() / saturation_intensity
         return optical_density + intensity_term
 
