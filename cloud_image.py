@@ -165,9 +165,12 @@ class CloudImage(object):
         od_image[np.isinf(od_image)] = od_image[~np.isinf(od_image)].max()
         return od_image
 
-    def get_cd_image(self, axis=1, linear_bias_switch=False, **kwargs):
+    def get_cd_image(self, axis=1, linear_bias_switch=False, INTCORR=True, **kwargs):
         '''return the column density, with offset removed'''
-        od_image = self.get_od_image(**kwargs)
+        if INTCORR:
+            od_image = self.optical_depth()
+        else:
+            od_image = self.get_od_image(**kwargs)
         imgcut = np.sum(od_image, axis)
        # try:
         if linear_bias_switch:
@@ -187,7 +190,6 @@ class CloudImage(object):
                 , pixel_size = self.pixel_size)
         gerbier_field = bp.field_array(line_density, **kwargs)
         return gerbier_field
-
         
     def get_vert_image(self):
         '''return the sum of the three images, appropriate for persistent features, especially useful in vertical imaging to see the sample'''
@@ -203,7 +205,7 @@ class CloudImage(object):
         imgcut = np.sum(od_image, axis)
         try:
             if linear_bias_switch:
-                coefs = fit_gaussian_1d(imgcut)
+               coefs = fit_gaussian_1d(imgcut)
             else:
                 coefs = fit_gaussian_1d_noline(imgcut)
         except:
@@ -460,6 +462,28 @@ class CloudImage(object):
                 this_image_time = DEFAULT_IMAGE_TIME
             return this_image_time
 
+    def optical_depth(self
+        , saturation_intensity=DEFAULT_I_SAT):
+        try:
+            optical_density = self.get_cd_image() * self.s_lambda
+        except FitError:
+            optical_density = self.get_od_image()
+        intensity_term = self.intensity_change() / saturation_intensity
+        return optical_density + intensity_term
 
-
-
+    def intensity_change(self):
+        return self.counts2intensity(self.light_image_trunc) - self.counts2intensity(self.atom_image_trunc)
+    
+    def saturation(self):
+        return np.mean(self.counts2saturation(self.light_image_trunc))
+    
+    def int_corr_atom_number(self):
+        return np.sum(optical_depth(self)) / self.s_lambda * (self.pixel_size / self.magnification)**2
+    
+    def optdens_number(self):
+        return self.atom_number()
+    
+    def int_term_number(self
+            , saturation_intensity=DEFAULT_I_SAT):
+        int_term = self.intensity_change() / saturation_intensity
+        return np.sum(int_term) / self.s_lambda * (self.pixel_size / self.magnification)**2
