@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import os
 from math import sqrt
-from scipy.ndimage import rotate
+from scipy.ndimage import rotate, filters
 from fit_functions import *
 import BECphysics as bp
 from BECphysics import C, H, LAMBDA_RB
@@ -185,12 +185,15 @@ class CloudImage(object):
 
         return (od_image - offset) / self.s_lambda
 
-    def get_gerbier_field(self, **kwargs):
+    def get_gerbier_field(self, filter_on = True, **kwargs):
         '''return the magnetic field reconstructed using the gerbier equation, with mu=0'''
         try:
             column_density = self.get_cd_image(**kwargs)
         except FitError:
             print('FYI, gaussian fit failed')
+        if filter_on:
+            sigma=24.0/13.0 #pixels per micron
+            column_density = filters.gaussian_filter(column_density,sigma)
         line_density = bp.line_density(column_density
                 , pixel_size = self.pixel_size)
         gerbier_field = bp.field_array(line_density)
