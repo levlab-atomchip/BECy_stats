@@ -480,7 +480,7 @@ class CloudImage(object):
         return np.mean(self.counts2saturation(self.light_image_trunc))
     
     def int_corr_atom_number(self):
-        return np.sum(optical_depth(self)) / self.s_lambda * (self.pixel_size / self.magnification)**2
+        return np.sum(self.optical_depth()) / self.s_lambda * (self.pixel_size / self.magnification)**2
     
     def optdens_number(self):
         return self.atom_number()
