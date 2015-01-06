@@ -185,7 +185,7 @@ class CloudImage(object):
 
         return (od_image - offset) / self.s_lambda
 
-    def get_gerbier_field(self, filter_on = True, **kwargs):
+    def get_gerbier_field(self, filter_on = False, **kwargs):
         '''return the magnetic field reconstructed using the gerbier equation, with mu=0'''
         try:
             column_density = self.get_cd_image(**kwargs)

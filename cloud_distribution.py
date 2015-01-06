@@ -629,6 +629,17 @@ class CloudDistribution(object):
             return (coef[2]+coef[3])/2.0
         else:
             print 'Incorrect key: parameter may not exist for fitting double gaussian.'
+    
+    def get_field_noise(self):
+        fas = []
+        for ii, this_file in enumerate(self.filelist):
+            print 'Processing file %d'%(ii+1)
+            this_img = cloud_image.CloudImage(this_file)
+            this_field = this_img.get_gerbier_field()
+            fas.append(this_field)
+        fa_arr = np.vstack(tuple(fas))
+        fa_std = np.std(fa_arr, axis=0)
+        return fa_std
 
 CD = CloudDistribution
         
