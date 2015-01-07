@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import os
 from math import sqrt
-from scipy.ndimage import rotate
+from scipy.ndimage import rotate, filters
 from fit_functions import *
 import BECphysics as bp
 from BECphysics import C, H, LAMBDA_RB
@@ -21,6 +21,10 @@ FILE_RE = re.compile(r'.(\d{6})\.mat')
 
 DEFAULT_IMAGE_TIME = 10e-6 #sec
 DEFAULT_I_SAT = 30.54 # W/m**2, for pi light 
+
+def image_subtract(im1, im2):
+    ''' return the absolute value of im1 - im2'''
+    return np.where(im1 > im2, im1 - im2, im2 - im1)
 
 class FitError(Exception):
     '''A rather generic error to raise if the gaussian fit fails'''
@@ -185,12 +189,15 @@ class CloudImage(object):
 
         return (od_image - offset) / self.s_lambda
 
-    def get_gerbier_field(self, **kwargs):
+    def get_gerbier_field(self, filter_on = False, **kwargs):
         '''return the magnetic field reconstructed using the gerbier equation, with mu=0'''
         try:
             column_density = self.get_cd_image(**kwargs)
         except FitError:
             print('FYI, gaussian fit failed')
+        if filter_on:
+            sigma=24.0/13.0 #pixels per micron
+            column_density = filters.gaussian_filter(column_density,sigma)
         line_density = bp.line_density(column_density
                 , pixel_size = self.pixel_size)
         gerbier_field = bp.field_array(line_density)
@@ -477,7 +484,7 @@ class CloudImage(object):
         return self.counts2intensity(self.light_image_trunc) - self.counts2intensity(self.atom_image_trunc)
     
     def saturation(self):
-        return np.mean(self.counts2saturation(self.light_image_trunc))
+        return np.mean(self.counts2saturation(image_subtract(self.light_image_trunc, self.dark_image_trunc)))
     
     def int_corr_atom_number(self):
         return np.sum(self.optical_depth()) / self.s_lambda * (self.pixel_size / self.magnification)**2
