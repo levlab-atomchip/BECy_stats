@@ -22,6 +22,10 @@ FILE_RE = re.compile(r'.(\d{6})\.mat')
 DEFAULT_IMAGE_TIME = 10e-6 #sec
 DEFAULT_I_SAT = 30.54 # W/m**2, for pi light 
 
+def image_subtract(im1, im2):
+    ''' return the absolute value of im1 - im2'''
+    return np.where(im1 > im2, im1 - im2, im2 - im1)
+
 class FitError(Exception):
     '''A rather generic error to raise if the gaussian fit fails'''
     def __init__(self, statement="Fit Error"):
@@ -480,7 +484,7 @@ class CloudImage(object):
         return self.counts2intensity(self.light_image_trunc) - self.counts2intensity(self.atom_image_trunc)
     
     def saturation(self):
-        return np.mean(self.counts2saturation(self.light_image_trunc))
+        return np.mean(self.counts2saturation(image_subtract(self.light_image_trunc, self.dark_image_trunc)))
     
     def int_corr_atom_number(self):
         return np.sum(optical_depth(self)) / self.s_lambda * (self.pixel_size / self.magnification)**2

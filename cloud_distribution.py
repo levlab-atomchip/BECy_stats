@@ -35,7 +35,7 @@ OVERLAP = False                      #True if the data is actually two gaussians
 if DOUBLE_GAUSSIAN:
     OVERLAP = False         #always fit single gaussian if the two gaussians overlap
 
-CUSTOM_FIT_WINDOW = [355,945,190,320]   #x0, x1, y0, y1
+CUSTOM_FIT_WINDOW = [393,623,130,148]   #x0, x1, y0, y1
 CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
 cloud_width = 1.0*10**-6.0 #used in OVERLAP, assuming the overlapping gaussians both have the same sigma of 1um
            
@@ -630,16 +630,33 @@ class CloudDistribution(object):
         else:
             print 'Incorrect key: parameter may not exist for fitting double gaussian.'
     
-    def get_field_noise(self):
+    def get_field_noise(self, filter_on=False):
         fas = []
         for ii, this_file in enumerate(self.filelist):
             print 'Processing file %d'%(ii+1)
             this_img = cloud_image.CloudImage(this_file)
-            this_field = this_img.get_gerbier_field()
+            if CUSTOM_FIT_SWITCH:
+                print 'Using Custom Window'
+                this_img.truncate_image(*self.custom_fit_window)
+            this_field = this_img.get_gerbier_field(filter_on)
+            this_field -= np.min(this_field)
             fas.append(this_field)
         fa_arr = np.vstack(tuple(fas))
         fa_std = np.std(fa_arr, axis=0)
         return fa_std
+        
+    def get_saturation(self):
+        sats = []
+        for ii, this_file in enumerate(self.filelist):
+            print 'Processing file %d'%(ii+1)
+            this_img = cloud_image.CloudImage(this_file)
+            if CUSTOM_FIT_SWITCH:
+                print 'Using Custom Window'
+                this_img.truncate_image(*self.custom_fit_window)
+            this_saturation = this_img.saturation()
+            sats.append(this_saturation)
+        return np.mean(sats)
+ 
 
 CD = CloudDistribution
         
