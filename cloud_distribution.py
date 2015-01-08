@@ -26,7 +26,7 @@ LINEAR_BIAS_SWITCH = False          #Use linear bias in gaussian fits
 FLUC_COR_SWITCH = True             #Use fluctuation correction
 OFFSET_SWITCH = True                #Use fit to offset densities for number calculation
 FIT_AXIS = 1;                       #0 is x, 1 is z      
-CUSTOM_FIT_SWITCH = False            #Use CUSTOM_FIT_WINDOW
+CUSTOM_FIT_SWITCH = True            #Use CUSTOM_FIT_WINDOW
 USE_FIRST_WINDOW = False            #Use the fit window from the first image for all images
 PIXEL_UNITS = False                  #Return lengths and positions in pixels
 DOUBLE_GAUSSIAN = False               #Fit a double gaussian
@@ -35,7 +35,9 @@ OVERLAP = False                      #True if the data is actually two gaussians
 if DOUBLE_GAUSSIAN:
     OVERLAP = False         #always fit single gaussian if the two gaussians overlap
 
-CUSTOM_FIT_WINDOW = [393,623,130,148]   #x0, x1, y0, y1
+#CUSTOM_FIT_WINDOW = [393,623,145,163]   #x0, x1, y0, y1, no atoms
+CUSTOM_FIT_WINDOW = [393,623,158,176]   #x0, x1, y0, y1, unperturbed at 40 A
+
 CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
 cloud_width = 1.0*10**-6.0 #used in OVERLAP, assuming the overlapping gaussians both have the same sigma of 1um
            
@@ -104,7 +106,7 @@ class CloudDistribution(object):
         index = 1
         if DOUBLE_GAUSSIAN:
             #p_0=fdg.fit_double_gaussian_1d(self.filelist[0],True)
-            p_0= [117.,117.,37.,39.,3.,3.,20.,0.1] # guess params for double gaussian fit in pixels or OD 
+            p_0= [20.,20.,21.,34.,3.5,3.2,288.,-2.9] # guess params for double gaussian fit in pixels or OD 
             #[amplitude of 1st peak, amplitude of 2nd peak, position_1, position_2, sigma_1, sigma_2,offset,slope]
         for this_file in self.filelist:
             if USE_FIRST_WINDOW and index == 1:
