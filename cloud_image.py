@@ -174,7 +174,7 @@ class CloudImage(object):
         if INTCORR:
             od_image = self.optical_depth()
         else:
-            od_image = self.get_od_image(**kwargs)
+            od_image = self.get_od_image(abs_od=False, **kwargs)
         imgcut = np.sum(od_image, axis)
         try:
             if linear_bias_switch:
@@ -476,7 +476,7 @@ class CloudImage(object):
 
     def optical_depth(self
         , saturation_intensity=DEFAULT_I_SAT):
-        optical_density = self.get_od_image()
+        optical_density = self.get_od_image(abs_od=False)
         intensity_term = self.intensity_change() / saturation_intensity
         return optical_density + intensity_term
 
