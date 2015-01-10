@@ -658,6 +658,16 @@ class CloudDistribution(object):
             this_saturation = this_img.saturation()
             sats.append(this_saturation)
         return np.mean(sats)
+
+    def get_ic_atom_numbers(self):
+        nums = []
+        for ii, this_file in enumerate(self.filelist):
+            this_img = self.makeimage(this_file)
+#            if CUSTOM_FIT_SWITCH:
+#                this_img.truncate_image(*self.custom_fit_window)
+            this_icnum = this_img.int_corr_atom_number()
+            nums.append(this_icnum)
+        return nums
  
 
 CD = CloudDistribution

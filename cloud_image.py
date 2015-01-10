@@ -476,10 +476,23 @@ class CloudImage(object):
             return this_image_time
 
     def optical_depth(self
+		    , linear_bias_switch=False
         , saturation_intensity=DEFAULT_I_SAT):
         optical_density = self.get_od_image(abs_od=False)
+	imgcut = np.sum(optical_density, axis=0)
+        try:
+            if linear_bias_switch:
+                coefs = fit_gaussian_1d(imgcut)
+                offset = coefs[3] / optical_density.shape[1]
+            else:
+                coefs = fit_gaussian_1d_noline(imgcut)
+                offset = coefs[3] / optical_density.shape[1]
+        except RuntimeError:
+            offset = np.mean(imgcut) / optical_density.shape[1]
+            #raise FitError('atom_number')
+
         intensity_term = self.intensity_change() / saturation_intensity
-        return optical_density + intensity_term
+        return optical_density - offset + intensity_term
 
     def intensity_change(self):
         return self.counts2intensity(self.light_image_trunc) - self.counts2intensity(self.atom_image_trunc)
