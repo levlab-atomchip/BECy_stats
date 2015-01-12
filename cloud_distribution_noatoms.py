@@ -17,7 +17,7 @@ OVERLAP = False                      #True if the data is actually two gaussians
 if DOUBLE_GAUSSIAN:
     OVERLAP = False         #always fit single gaussian if the two gaussians overlap
 
-CUSTOM_FIT_WINDOW = [393,623,130,148]   #x0, x1, y0, y1
+CUSTOM_FIT_WINDOW = [393,623,150,151]   #x0, x1, y0, y1
 CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
 cloud_width = 1.0*10**-6.0 #used in OVERLAP, assuming the overlapping gaussians both have the same sigma of 1um
 
