@@ -35,8 +35,8 @@ OVERLAP = False                      #True if the data is actually two gaussians
 if DOUBLE_GAUSSIAN:
     OVERLAP = False         #always fit single gaussian if the two gaussians overlap
 
-#CUSTOM_FIT_WINDOW = [393,623,145,163]   #x0, x1, y0, y1, no atoms
-CUSTOM_FIT_WINDOW = [393,623,158,176]   #x0, x1, y0, y1, unperturbed at 40 A
+CUSTOM_FIT_WINDOW = [393,623,145,163]   #x0, x1, y0, y1, no atoms
+#CUSTOM_FIT_WINDOW = [393,623,158,176]   #x0, x1, y0, y1, unperturbed at 40 A
 
 CAMPIXSIZE = 3.75e-6 #m, physical size of camera pixel
 cloud_width = 1.0*10**-6.0 #used in OVERLAP, assuming the overlapping gaussians both have the same sigma of 1um
@@ -49,6 +49,7 @@ class CloudDistribution(object):
 
         self.directory = directory
         self.INITIALIZE_GAUSSIAN_PARAMS = INITIALIZE_GAUSSIAN_PARAMS
+        self.makeimage = cloud_image.CloudImage
 
         print self.directory
 
@@ -110,7 +111,7 @@ class CloudDistribution(object):
             #[amplitude of 1st peak, amplitude of 2nd peak, position_1, position_2, sigma_1, sigma_2,offset,slope]
         for this_file in self.filelist:
             if USE_FIRST_WINDOW and index == 1:
-                first_img = cloud_image.CloudImage(this_file)
+                first_img = self.makeimage(this_file)
                 self.custom_fit_window = [first_img.trunc_win_x[0],
                                      first_img.trunc_win_x[-1],
                                      first_img.trunc_win_y[0],
@@ -151,7 +152,7 @@ class CloudDistribution(object):
 
     def get_gaussian_params(self, file, **kwargs):
         '''return cloud parameters extracted from gaussian fits'''
-        this_img = cloud_image.CloudImage(file)
+        this_img = self.makeimage(file)
         if CUSTOM_FIT_SWITCH:
             this_img.truncate_image(*self.custom_fit_window)
         gaussian_params = \
@@ -170,7 +171,7 @@ class CloudDistribution(object):
             print 'Processing File %d' % index
             index += 1
 
-            this_img = cloud_image.CloudImage(this_file)
+            this_img = self.makeimage(this_file)
             this_img_cont_par_name = this_img.cont_par_name
             if self.cont_par_name is None:
                 self.cont_par_name = this_img_cont_par_name
@@ -229,14 +230,14 @@ class CloudDistribution(object):
             print 'Processing File %d' % index
             index += 1
             try:  # First assume it is in the variables
-                this_img = cloud_image.CloudImage(this_file)
+                this_img = self.makeimage(this_file)
                 this_value = this_img.get_variables_values()[var]
                 # raises an AttributeError if the data is
                 # too old to have saved variables, or
             # Now see if it is a method name
             except (KeyError, AttributeError):
                 try:
-                    this_img = cloud_image.CloudImage(this_file)
+                    this_img = self.makeimage(this_file)
                     exec('this_value = this_img.' + var + '(**kwargs)')
                 except AttributeError:
                     print 'Invalid Method Name'
@@ -550,13 +551,13 @@ class CloudDistribution(object):
         
     def get_average_image(self, **kwargs):
         '''Return the average of all odimages in a distribution'''
-        firstimg = cloud_image.CloudImage(self.filelist[0])
+        firstimg = self.makeimage(self.filelist[0])
         if CUSTOM_FIT_SWITCH:
                 firstimg.truncate_image(*self.custom_fit_window)
         avg_img = np.zeros(np.shape(firstimg.get_od_image(**kwargs)))
     
         for this_file in self.filelist:
-            this_img = cloud_image.CloudImage(this_file)
+            this_img = self.makeimage(this_file)
             print this_img.filename
             if CUSTOM_FIT_SWITCH:
                 this_img.truncate_image(*self.custom_fit_window)
@@ -575,7 +576,7 @@ class CloudDistribution(object):
         var_img = np.zeros(np.shape(self.avg_img))
         
         for this_file in self.filelist:
-            this_img = cloud_image.CloudImage(this_file).get_od_image()
+            this_img = self.makeimage(this_file).get_od_image()
             var_img += (this_img - self.avg_img)**2
             
         var_img /= self.numimgs
@@ -588,7 +589,7 @@ class CloudDistribution(object):
     
     def fit_double_gaussian(self, file, p_0_guess = None):
         '''fits one data file to a double-gaussian'''
-        data = np.sum(np.array(cloud_image.CloudImage(file).get_od_image()),1)
+        data = np.sum(np.array(self.makeimage(file).get_od_image()),1)
         try:
             if p_0_guess == None:
                 coef=fdg.fit_double_gaussian_1d(data,True)
@@ -636,12 +637,11 @@ class CloudDistribution(object):
         fas = []
         for ii, this_file in enumerate(self.filelist):
             print 'Processing file %d'%(ii+1)
-            this_img = cloud_image.CloudImage(this_file)
+            this_img = self.makeimage(this_file)
             if CUSTOM_FIT_SWITCH:
                 print 'Using Custom Window'
                 this_img.truncate_image(*self.custom_fit_window)
             this_field = this_img.get_gerbier_field(filter_on)
-            this_field -= np.min(this_field)
             fas.append(this_field)
         fa_arr = np.vstack(tuple(fas))
         fa_std = np.std(fa_arr, axis=0)
@@ -651,13 +651,23 @@ class CloudDistribution(object):
         sats = []
         for ii, this_file in enumerate(self.filelist):
             print 'Processing file %d'%(ii+1)
-            this_img = cloud_image.CloudImage(this_file)
+            this_img = self.makeimage(this_file)
             if CUSTOM_FIT_SWITCH:
                 print 'Using Custom Window'
                 this_img.truncate_image(*self.custom_fit_window)
             this_saturation = this_img.saturation()
             sats.append(this_saturation)
         return np.mean(sats)
+
+    def get_ic_atom_numbers(self):
+        nums = []
+        for ii, this_file in enumerate(self.filelist):
+            this_img = self.makeimage(this_file)
+            if CUSTOM_FIT_SWITCH:
+                this_img.truncate_image(*self.custom_fit_window)
+            this_icnum = this_img.int_corr_atom_number()
+            nums.append(this_icnum)
+        return nums
  
 
 CD = CloudDistribution

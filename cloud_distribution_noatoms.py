@@ -24,29 +24,4 @@ cloud_width = 1.0*10**-6.0 #used in OVERLAP, assuming the overlapping gaussians 
 class CloudDistributionNoAtoms(CloudDistribution):
     def __init__(self, directory=None, INITIALIZE_GAUSSIAN_PARAMS=True):
         CloudDistribution.__init__(self,directory, INITIALIZE_GAUSSIAN_PARAMS)
-    
-    def get_field_noise(self, filter_on=False):
-        fas = []
-        for ii, this_file in enumerate(self.filelist):
-            print 'Processing file %d'%(ii+1)
-            this_img = nai(this_file)
-            if CUSTOM_FIT_SWITCH:
-                print 'Using Custom Window'
-                this_img.truncate_image(*self.custom_fit_window)
-            this_field = this_img.get_gerbier_field(filter_on)
-            fas.append(this_field)
-        fa_arr = np.vstack(tuple(fas))
-        fa_std = np.std(fa_arr, axis=0)
-        return fa_std
-        
-    def get_saturation(self):
-        sats = []
-        for ii, this_file in enumerate(self.filelist):
-            print 'Processing file %d'%(ii+1)
-            this_img = nai(this_file)
-            if CUSTOM_FIT_SWITCH:
-                print 'Using Custom Window'
-                this_img.truncate_image(*self.custom_fit_window)
-            this_saturation = this_img.saturation()
-            sats.append(this_saturation)
-        return np.mean(sats)
+        self.makeimage = nai
