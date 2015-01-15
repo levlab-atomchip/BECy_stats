@@ -104,7 +104,7 @@ def field_array(l_density
     if USE_TF_MU:
         mu = chemical_potential(l_density, omega_rad, omega_long) #this is sketchy
     else:
-	mu = 0
+        mu = 0
     return (mu - HBAR*omega_rad * np.sqrt(np.abs(1 + 4*A*l_density))) / MUB
     
 def chemical_potential(line_density, omega_rad, omega_long):
