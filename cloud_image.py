@@ -68,7 +68,7 @@ class CloudImage(object):
 
         if 3.0e-6<self.pixel_size<4.0e-6:
             #dragonfly
-            self.quantum_efficiency = 0.25
+            self.quantum_efficiency = 0.2*16.0 # quantum efficiency 0.2 measured on 01/14/2015, factor of 16.0 due to padding of 12-bit camera counts by 4 zeros. 
         elif 12.0e-6<self.pixel_size<14.0e-6:
                 #pixis
             self.quantum_efficiency = 0.95
