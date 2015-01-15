@@ -68,11 +68,14 @@ class CloudImage(object):
 
         if 3.0e-6<self.pixel_size<4.0e-6:
             #dragonfly
-            self.quantum_efficiency = 0.25
+            self.cameratype = 'dragonfly'
+            self.quantum_efficiency = 0.20
         elif 12.0e-6<self.pixel_size<14.0e-6:
                 #pixis
+            self.cameratype = 'pixis'
             self.quantum_efficiency = 0.95
         else:
+            self.cameratype = 'unknown'
             self.quantum_efficiency = None
 
         self.trunc_win_x = self.hfig_main.calculation.truncWinX
@@ -457,7 +460,10 @@ class CloudImage(object):
 
 
     def counts2intensity(self, rawimage):
-        return (rawimage / self.quantum_efficiency)*(H*C/LAMBDA_RB) / ((self.pixel_size / self.magnification)**2) / self.get_image_time()
+        result = (rawimage / self.quantum_efficiency)*(H*C/LAMBDA_RB) / ((self.pixel_size / self.magnification)**2) / self.get_image_time()
+        if self.cameratype == 'dragonfly':
+            result /= 16
+        return result
     
     def counts2saturation(self
 		    , rawimage
