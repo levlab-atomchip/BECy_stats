@@ -73,7 +73,7 @@ class CloudImage(object):
         elif 12.0e-6<self.pixel_size<14.0e-6:
                 #pixis
             self.cameratype = 'pixis'
-            self.quantum_efficiency = 1.03
+            self.quantum_efficiency = 0.95
         else:
             self.cameratype = 'unknown'
             self.quantum_efficiency = None
