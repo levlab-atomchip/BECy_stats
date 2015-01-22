@@ -107,9 +107,9 @@ class CloudImage(object):
     def set_fluc_corr(self, x1, x2, y1, y2):
         '''Calculate fluctuation correction given a fluctuation window'''
         int_atom = np.mean(np.mean(self.atom_image[y1:y2,
-                                              x1:x2]))
+            x1:x2] - self.dark_image[y1:y2, x1:x2]))
         int_light = np.mean(np.mean(self.light_image[y1:y2,
-                                              x1:x2]))
+            x1:x2] - self.dark_image[y1:y2, x1:x2]))
         self.fluc_cor = int_atom / int_light
         self.fluc_cor_corner = (x1, y1)
         self.fluc_cor_width = x2 - x1
@@ -484,6 +484,11 @@ class CloudImage(object):
     def optical_depth(self
 		    , linear_bias_switch=False
         , saturation_intensity=DEFAULT_I_SAT):
+        """Return the intensity corrected optical depth.
+
+        Note that this relies on get_od_image and uses the default options,
+        in particular truncation and fluctuation correction
+        """
         optical_density = self.get_od_image(abs_od=False)
 	imgcut = np.sum(optical_density, axis=0)
         try:
@@ -501,16 +506,16 @@ class CloudImage(object):
         return optical_density - offset + intensity_term
 
     def intensity_change(self):
-        return self.counts2intensity(self.light_image_trunc) - self.counts2intensity(self.atom_image_trunc)
+        return self.fluc_cor * self.counts2intensity(self.light_image_trunc) - self.counts2intensity(self.atom_image_trunc)
     
     def saturation(self):
-        return np.mean(self.counts2saturation(image_subtract(self.light_image_trunc, self.dark_image_trunc)))
+        return np.mean(self.counts2saturation(self.fluc_cor * image_subtract(self.light_image_trunc, self.dark_image_trunc)))
     
     def int_corr_atom_number(self):
         return np.sum(self.optical_depth()) / self.s_lambda * (self.pixel_size / self.magnification)**2
     
-    def optdens_number(self):
-        return self.atom_number()
+    def optdens_number(self, axis):
+        return self.atom_number(axis=axis)
     
     def int_term_number(self
             , saturation_intensity=DEFAULT_I_SAT):
