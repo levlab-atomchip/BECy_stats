@@ -665,8 +665,13 @@ class CloudDistribution(object):
             this_img = self.makeimage(this_file)
             if CUSTOM_FIT_SWITCH:
                 this_img.truncate_image(*self.custom_fit_window)
-            this_icnum = this_img.int_corr_atom_number()
-            nums.append(this_icnum)
+            try:
+                this_icnum = this_img.int_corr_atom_number()
+            except cloud_image.FitError:
+                print 'FitError in get_ic_atom_numbers'
+                pass #skip bad fits
+            else:
+                nums.append(this_icnum)
         return nums
  
 
