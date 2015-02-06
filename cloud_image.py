@@ -524,13 +524,20 @@ class CloudImage(object):
     def saturation(self):
         return np.mean(self.counts2saturation(self.fluc_cor * image_subtract(self.light_image_trunc, self.dark_image_trunc)))
     
-    def int_corr_atom_number(self):
-        return np.sum(self.optical_depth()) / self.s_lambda * (self.pixel_size / self.magnification)**2
+    def int_corr_atom_number(self, axis=0):
+        try:
+            return self.optdens_number(axis) + self.int_term_number()
+        except FitError:
+            print 'FitError in int_corr_atom_number'
+            raise FitError('atom_number')
     
     def optdens_number(self, axis):
-        return self.atom_number(axis=axis)
-    
-    def int_term_number(self
-            , saturation_intensity=DEFAULT_I_SAT):
-        int_term = self.intensity_change() / saturation_intensity
+        try:
+            return self.atom_number(axis=axis)
+        except FitError:
+            print 'FitError in optdens_number'
+            raise FitError('atom_number')
+            
+    def int_term_number(self):
+        int_term = self.intensity_change() / self.isat
         return np.sum(int_term) / self.s_lambda * (self.pixel_size / self.magnification)**2
