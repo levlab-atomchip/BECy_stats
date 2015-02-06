@@ -56,15 +56,18 @@ def gaussian_2d(xdata,
     return A_x*np.exp(-1.*(x-mu_x)**2./(2.*sigma_x**2.)) + \
             A_y*np.exp(-1.*(x-mu_y)**2./(2.*sigma_y**2.)) + offset
 
-def fit_gaussian_1d(image):
+def fit_gaussian_1d(image, xdata=None):
     '''fits a 1D Gaussian to a 1D image;
     includes constant offset and linear bias'''
     max_value = image.max()
-    max_loc = np.argmax(image)
+
+    if xdata is None:
+        xdata = np.arange(np.size(image)) #default to working in pixel units
+        
+    max_loc = xdata[np.argmax(image)]
     [_, half_max_ind] = find_nearest(image, max_value/2.)
-    hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
+    hwhm = 1.17*abs(xdata[half_max_ind] - max_loc) # what is 1.17???
     p_0 = [np.sqrt(max_value), max_loc, hwhm, 0., 0.] #fit guess
-    xdata = np.arange(np.size(image))
 
     coef, _ = curve_fit(gaussian_1d, xdata, image, p0=p_0)
     return coef
@@ -81,15 +84,17 @@ def fit_gaussian_1d_wings(image, xdata):
     coef, _ = curve_fit(gaussian_1d, xdata, image, p0=p_0)
     return coef
     
-def fit_gaussian_1d_noline(image):
+def fit_gaussian_1d_noline(image, xdata=None):
     '''fits a 1D Gaussian to a 1D image;
     includes constant offset and linear bias'''
     max_value = image.max()
-    max_loc = np.argmax(image)
+    if xdata is None:
+        xdata = np.arange(np.size(image))    
+
+    max_loc = xdata[np.argmax(image)]
     [_, half_max_ind] = find_nearest(image, max_value/2.)
-    hwhm = 1.17*abs(half_max_ind - max_loc) # what is 1.17???
+    hwhm = 1.17*abs(xdata[half_max_ind] - max_loc)
     p_0 = [np.sqrt(max_value), max_loc, hwhm, 0.] #fit guess
-    xdata = np.arange(np.size(image))
 
     coef, _ = curve_fit(gaussian_1d_noline, xdata, image, p0=p_0)
     return coef
