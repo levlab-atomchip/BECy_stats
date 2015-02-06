@@ -35,6 +35,12 @@ def bec_1d(x, maxsqrt, Bsqrt, center):
 def bec_thermal_1d(x, Asqrt, mu, sigma, offset, maxsqrt, Bsqrt):
     '''Simultaneous fit of BEC and gaussian'''
     return gaussian_1d_noline(x, Asqrt, mu, sigma, offset) + bec_1d(x, maxsqrt, Bsqrt, mu)
+    
+def lorentzian(x, Asqrt, mu, width):
+    ''' fitting function for lorentzian lineshape'''
+    return Asqrt**2 / (pi*width*(1 + ((x - mu) / width)**2))
+    
+    
 
 def gaussian_2d(xdata,
                 A_x,
@@ -148,6 +154,20 @@ def fit_partial_bec(image):
     # plt.ylim((0, 1.2*max(image))); 
     plt.show()
     return (gaussian_wings2, bec_fit)
+    
+    
+def fit_lorentzian(image, xdata=None, give_errors=False):
+    max_value = image.max()
+    if xdata is None:
+        xdata = np.arange(np.size(image))    
+
+    max_loc = xdata[np.argmax(image)]
+    [_, half_max_ind] = find_nearest(image, max_value/2.)
+    hwhm = abs(xdata[half_max_ind] - max_loc)
+    p_0 = [np.sqrt(max_value * pi * hwhm), max_loc, hwhm] #fit guess
+
+    coef, covar = curve_fit(lorentzian, xdata, image, p0=p_0)
+    return coef, np.sqrt(np.diagonal(covar))
 
 def fit_gaussian_2d(image):
     '''fits a 2D Gaussian to a 2D Image'''
