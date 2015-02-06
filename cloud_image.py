@@ -76,11 +76,16 @@ class CloudImage(object):
         if 3.0e-6<self.pixel_size<4.0e-6:
             #dragonfly
             self.cameratype = 'dragonfly'
-            self.quantum_efficiency = 0.20
+            if self.magnification > 3:
+            #high mag, no glass camera
+                self.quantum_efficiency = 0.11
+            else:
+            #low mag, glass camera
+                self.quantum_efficiency = 0.14
         elif 12.0e-6<self.pixel_size<14.0e-6:
                 #pixis
             self.cameratype = 'pixis'
-            self.quantum_efficiency = 0.95
+            self.quantum_efficiency = 1.03
         else:
             self.cameratype = 'unknown'
             self.quantum_efficiency = None
