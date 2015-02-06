@@ -24,6 +24,10 @@ def gaussian_1d_noline(x, Asqrt, mu, sigma, offset):
     '''fitting function for 1D gaussian plus offset'''
     return Asqrt**2*np.exp(-1.*(x-mu)**2./(2.*sigma**2.)) + offset
     
+def gaussian_1d_bare(x, Asqrt, mu, sigma):
+    '''fitting function for 1D gaussian plus offset'''
+    return Asqrt**2*np.exp(-1.*(x-mu)**2./(2.*sigma**2.))
+    
 def bec_1d(x, maxsqrt, Bsqrt, center):
     '''fitting function for a Thomas-Fermi BEC in a harmonic trap'''
     # using sqrt of parameters to force positive values
@@ -97,6 +101,21 @@ def fit_gaussian_1d_noline(image, xdata=None):
     p_0 = [np.sqrt(max_value), max_loc, hwhm, 0.] #fit guess
 
     coef, _ = curve_fit(gaussian_1d_noline, xdata, image, p0=p_0)
+    return coef
+    
+def fit_gaussian_1d_bare(image, xdata=None):
+    '''fits a 1D Gaussian to a 1D image;
+    includes constant offset and linear bias'''
+    max_value = image.max()
+    if xdata is None:
+        xdata = np.arange(np.size(image))    
+
+    max_loc = xdata[np.argmax(image)]
+    [_, half_max_ind] = find_nearest(image, max_value/2.)
+    hwhm = 1.17*abs(xdata[half_max_ind] - max_loc)
+    p_0 = [np.sqrt(max_value), max_loc, hwhm] #fit guess
+
+    coef, _ = curve_fit(gaussian_1d_bare, xdata, image, p0=p_0)
     return coef
     
 def fit_gaussian_1d_noline_wings(image, xdata):
