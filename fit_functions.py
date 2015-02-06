@@ -8,6 +8,7 @@ fit_functions - a collection of functions used to fit data
 
 import numpy as np
 from scipy.optimize import curve_fit
+from math import pi
 
 def find_nearest(array, value):
     '''return the index and value of the array element closest to value'''
