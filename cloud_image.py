@@ -20,7 +20,6 @@ DEBUG_FLAG = False
 FILE_RE = re.compile(r'.(\d{6})\.mat')
 
 DEFAULT_IMAGE_TIME = 10e-6 #sec
-DEFAULT_I_SAT = 30.54 # W/m**2, for pi light 
 
 def image_subtract(im1, im2):
     ''' return the absolute value of im1 - im2'''
@@ -64,6 +63,14 @@ class CloudImage(object):
         self.image_rotation = self.hfig_main.display.imageRotation
         self.c1 = self.hfig_main.calculation.c1 # what is this?
         self.s_lambda = self.hfig_main.calculation.s_lambda # atomic cross section
+        
+        if self.s_lambda > 2e-13:
+            # sigma light
+            self.isat = 16.7 #W/m^2
+        else:
+            # pi light
+            self.isat = 30.4 #W/m^2
+        
         self.A = self.hfig_main.calculation.A # real space pixel area
 
         if 3.0e-6<self.pixel_size<4.0e-6:
@@ -467,30 +474,31 @@ class CloudImage(object):
     
     def counts2saturation(self
 		    , rawimage
-                    , saturation_intensity=DEFAULT_I_SAT
                     ):
-        return self.counts2intensity(rawimage)/saturation_intensity
+        return self.counts2intensity(rawimage)/self.isat
 
     def get_image_time(self):
         if self.cont_par_name == 'ExposeTime':
             return self.curr_cont_par
         else:
             try:
-                this_image_time = self.get_variables_values()['ExposeTime']
-            except:
-                this_image_time = DEFAULT_IMAGE_TIME
+                this_image_time = self.get_variables_values()['ImagePulseTime']
+            except KeyError:
+                try:
+                    this_image_time = self.get_variables_values()['ExposeTime']
+                except KeyError:
+                    this_image_time = DEFAULT_IMAGE_TIME
             return this_image_time
 
     def optical_depth(self
-		    , linear_bias_switch=False
-        , saturation_intensity=DEFAULT_I_SAT):
+		    , linear_bias_switch=False):
         """Return the intensity corrected optical depth.
 
         Note that this relies on get_od_image and uses the default options,
         in particular truncation and fluctuation correction
         """
         optical_density = self.get_od_image(abs_od=False)
-	imgcut = np.sum(optical_density, axis=0)
+        imgcut = np.sum(optical_density, axis=0)
         try:
             if linear_bias_switch:
                 coefs = fit_gaussian_1d(imgcut)
@@ -502,7 +510,7 @@ class CloudImage(object):
             offset = np.mean(imgcut) / optical_density.shape[1]
             #raise FitError('atom_number')
 
-        intensity_term = self.intensity_change() / saturation_intensity
+        intensity_term = self.intensity_change() / self.isat
         return optical_density - offset + intensity_term
 
     def intensity_change(self):
